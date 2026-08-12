@@ -14,6 +14,10 @@ import {
 } from "@/src/data/evidence";
 import { demoStateSchema } from "@/src/domain/state-schema";
 import { coachRequestSchema } from "@/src/ai/schemas";
+import {
+  AI_PROFILE_FIELDS,
+  buildAiProfile,
+} from "@/src/ai/profile-context";
 
 describe("deterministic calculations", () => {
   it("calculates pack years", () => {
@@ -51,6 +55,30 @@ describe("coach request boundary", () => {
     expect(
       coachRequestSchema.safeParse({ message: "Help", evidenceIds: ["x".repeat(101)] }).success,
     ).toBe(false);
+  });
+});
+describe("AI profile context", () => {
+  it("passes every structured review field without identity data", () => {
+    const assessment = {
+      ageBand: "45-59" as const,
+      cigarettesPerDay: 20,
+      yearsSmoked: 25,
+      firstCigarette: "6-30" as const,
+      previousAttempts: "2-3" as const,
+      longestQuit: "weeks" as const,
+      methodsTried: ["combination NRT"],
+      vaping: "sometimes" as const,
+      packPrice: 15,
+      motivations: ["family", "health"],
+      importance: 9,
+      confidence: 4,
+      conditions: ["copd" as const],
+      intention: "quit" as const,
+    };
+    const profile = buildAiProfile(assessment);
+    for (const field of AI_PROFILE_FIELDS)
+      expect(profile).toHaveProperty(field);
+    expect(JSON.stringify(profile)).not.toMatch(/name|email|alias/i);
   });
 });
 describe("local state boundary", () => {
@@ -126,6 +154,12 @@ describe("verified evidence boundary", () => {
       eligible.find((item) => item.id === "lung-health-study-copd-lung-function")
         ?.absoluteEffect,
     ).toMatch(/31 mL\/year.*62 mL\/year/);
+    expect(
+      eligible.some((item) => item.id === "nice-ng209-personalised-approach"),
+    ).toBe(true);
+    expect(
+      eligible.some((item) => item.id === "baker-time-first-cigarette-2007"),
+    ).toBe(true);
   });
 });
 describe("safety routes", () => {

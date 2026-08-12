@@ -24,6 +24,16 @@ export const smokingModule: HealthModule = {
           ? ["vaping"]
           : []),
         ...(assessment.confidence <= 5 ? ["confidence"] : []),
+        ...(assessment.firstCigarette === "within-5" ||
+        assessment.firstCigarette === "6-30"
+          ? ["higher-dependence-pattern"]
+          : []),
+        ...(assessment.previousAttempts !== "none"
+          ? ["previous-attempts", "quit-experience"]
+          : []),
+        ...(assessment.methodsTried.length ? ["quit-experience"] : []),
+        ...(assessment.packPrice !== undefined ? ["money"] : []),
+        "personalised-approach",
         ...assessment.conditions,
         ...assessment.motivations,
       ]),

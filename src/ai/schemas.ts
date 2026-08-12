@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AI_PROFILE_FIELDS } from "./profile-context";
 
 export const assessmentContextSchema = z.object({
   ageBand: z.enum(["18-29", "30-44", "45-59", "60-65", "66+"]),
@@ -72,6 +73,8 @@ const citedEvidenceIds = z
   .min(1)
   .max(3);
 
+const profileField = z.enum(AI_PROFILE_FIELDS);
+
 export const evidenceBriefRequestSchema = z.object({
   evidenceIds: z
     .array(z.string().min(1).max(100).regex(/^[a-z0-9-]+$/))
@@ -102,6 +105,23 @@ export const evidenceBriefOutputSchema = z.object({
       }),
     )
     .max(4),
+  profile_factors_used: z.array(profileField).length(AI_PROFILE_FIELDS.length),
+  personalised_strategy: z.object({
+    headline: z.string().max(160),
+    summary: z.string().max(500),
+    steps: z
+      .array(
+        z.object({
+          title: z.string().max(120),
+          explanation: z.string().max(400),
+          matched_factors: z.array(profileField).min(1).max(6),
+          evidence_ids: citedEvidenceIds,
+          needs_professional_discussion: z.boolean(),
+        }),
+      )
+      .min(2)
+      .max(4),
+  }),
   key_points: z
     .array(
       z.object({

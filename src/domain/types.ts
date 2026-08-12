@@ -31,6 +31,7 @@ export interface EvidenceRecord {
   sourceType:
     | "guideline"
     | "randomised-trial"
+    | "cohort-study"
     | "systematic-review"
     | "public-health-resource"
     | "service-resource";

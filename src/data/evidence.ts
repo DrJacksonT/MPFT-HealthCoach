@@ -111,6 +111,88 @@ export const evidenceRecords: readonly EvidenceRecord[] = Object.freeze([
     evidenceConfidence: "high",
   }),
   verifiedRecord({
+    id: "nice-ng209-personalised-approach",
+    title:
+      "Tobacco dependence: matching stop-smoking approaches to the person",
+    organisation: "NICE",
+    publicationYear: 2025,
+    publicationDate: "2025-02-04",
+    url: "https://www.nice.org.uk/guidance/ng209/chapter/treating-tobacco-dependence",
+    sourceType: "guideline",
+    studyDesign: "National evidence-based guideline",
+    population: "Adults who smoke or use tobacco",
+    interventionOrExposure:
+      "Choice of stop-smoking support based on the person's circumstances",
+    outcome: "Selection and delivery of stop-smoking support",
+    timeframe: "At the current quit, reduction or preparation attempt",
+    mainFinding:
+      "NICE says options should be discussed using the person's preferences, health and social circumstances, medicines, contraindications and previous experience of stop-smoking aids. It also says behavioural support should be offered whichever stop-smoking option is chosen.",
+    patientFriendlySummary:
+      "The best-supported starting approach should reflect your smoking pattern, previous attempts, health, preferences and the kind of change you want to make.",
+    applicabilityTags: [
+      "personalised-approach",
+      "previous-attempts",
+      "quit-experience",
+      "higher-dependence-pattern",
+      "confidence",
+      "health",
+      "quit",
+      "reduce",
+      "learn",
+      "cessation-support",
+    ],
+    limitations: [
+      "The guideline supports shared decision-making; it does not allow this application to select or prescribe a medicine.",
+      "Health conditions and current medicines need professional review before a medicine is chosen.",
+      "Preferences and previous experience guide the discussion but do not guarantee success.",
+    ],
+    riskOfBiasNotes:
+      "This record reports guideline recommendations and does not create a new treatment-ranking model.",
+    evidenceConfidence: "high",
+    verificationNotes:
+      "Directly matched on 12 August 2026 to NICE NG209 recommendations 1.12.6 to 1.12.10 and 1.15.3 on behavioural support, preferences, health circumstances, previous experience and suitable approaches.",
+  }),
+  verifiedRecord({
+    id: "baker-time-first-cigarette-2007",
+    title:
+      "Time to first cigarette in the morning as an index of ability to quit smoking",
+    authors: ["Baker TB", "Piper ME", "McCarthy DE", "et al."],
+    organisation: "Nicotine & Tobacco Research",
+    publicationYear: 2007,
+    publicationDate: "2007-12-01",
+    url: "https://pubmed.ncbi.nlm.nih.gov/18067032/",
+    doi: "10.1080/14622200701673480",
+    sourceType: "cohort-study",
+    studyDesign:
+      "Analysis of four placebo-controlled cessation trials and one epidemiological study",
+    population: "Adults who smoked in treatment and population datasets",
+    interventionOrExposure: "Time from waking to the first cigarette",
+    outcome: "Nicotine dependence and ability to maintain abstinence",
+    timeframe: "During smoking-cessation follow-up",
+    mainFinding:
+      "Time to the first cigarette after waking carried much of the predictive value of the Fagerström dependence test and performed better than its other single measures for cessation outcome.",
+    patientFriendlySummary:
+      "How soon you smoke after waking is useful when planning support because it can signal how strongly and automatically smoking is built into the day.",
+    applicabilityTags: [
+      "higher-dependence-pattern",
+      "personalised-approach",
+      "cessation-support",
+      "confidence",
+      "quit",
+      "reduce",
+    ],
+    limitations: [
+      "This is one dependence signal, not a diagnosis or a complete dependence score.",
+      "It does not identify which medicine is suitable for one person.",
+      "The result does not turn a smoking pattern into an exact personal chance of quitting.",
+    ],
+    riskOfBiasNotes:
+      "The analysis examined predictive validity across existing trial and epidemiological datasets rather than randomising people by time to first cigarette.",
+    evidenceConfidence: "moderate",
+    verificationNotes:
+      "The study design, conclusion and DOI were directly matched to the indexed abstract on 12 August 2026.",
+  }),
+  verifiedRecord({
     id: "nice-copd-smoking-risk",
     title:
       "Chronic obstructive pulmonary disease in over 16s: smoking cessation and exacerbation risk",

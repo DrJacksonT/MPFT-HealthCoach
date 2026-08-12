@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/evidence-summary/route";
 import { evidenceRecords } from "@/src/data/evidence";
+import { AI_PROFILE_FIELDS } from "@/src/ai/profile-context";
 
 const context = {
   ageBand: "45-59" as const,
@@ -44,12 +45,20 @@ describe("personalised evidence summary API", () => {
         kind: "risk" | "benefit";
       }[];
       important_uncertainties: string[];
+      profile_factors_used: string[];
+      personalised_strategy: {
+        steps: { matched_factors: string[]; evidence_ids: string[] }[];
+      };
     };
     expect(response.status).toBe(200);
     expect(body.kind).toBe("evidence-brief");
     expect(body.generatedBy).toBe("reviewed-template");
     expect(body.key_points[0].evidence_ids).toEqual(["nice-ng209-options"]);
     expect(body.quantified_facts).toHaveLength(0);
+    expect(new Set(body.profile_factors_used)).toEqual(
+      new Set(AI_PROFILE_FIELDS),
+    );
+    expect(body.personalised_strategy.steps.length).toBeGreaterThanOrEqual(2);
     expect(body.important_uncertainties.join(" ")).toMatch(/cannot|not provide/i);
   });
 

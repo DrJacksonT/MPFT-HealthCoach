@@ -37,6 +37,11 @@ import {
   smokingModule,
 } from "@/src/modules/smoking";
 import { demoStateSchema } from "@/src/domain/state-schema";
+import {
+  AI_PROFILE_FIELDS,
+  profileDisplayRows,
+  type AiProfileField,
+} from "@/src/ai/profile-context";
 
 interface CoachCitation {
   id: string;
@@ -75,6 +80,18 @@ interface EvidenceBrief {
     caveat: string;
     certainty: "high" | "moderate" | "limited";
   }[];
+  profile_factors_used?: AiProfileField[];
+  personalised_strategy?: {
+    headline: string;
+    summary: string;
+    steps: {
+      title: string;
+      explanation: string;
+      matched_factors: AiProfileField[];
+      evidence_ids: string[];
+      needs_professional_discussion: boolean;
+    }[];
+  };
   key_points?: {
     title: string;
     explanation: string;
@@ -589,7 +606,9 @@ function AccountPanel({
           <small>PSEUDONYMOUS PROFILE</small>
           <strong>{account.alias}</strong>
           <span>
-            Your review, goals and check-ins are saved to this profile.
+            Your complete review profile, goals and check-ins are saved. Your
+            review fields are supplied to the evidence AI when it prepares a
+            briefing or answers a follow-up.
             {insights?.progress?.check_in_count
               ? ` ${insights.progress.check_in_count} check-ins, ${insights.progress.smoke_free_check_ins ?? 0} smoke-free.`
               : ""}
@@ -643,8 +662,9 @@ function AccountPanel({
             onChange={(event) => setAccepted(event.target.checked)}
           />
           I agree to store my smoking review, selected health areas, goals and
-          check-ins in this profile. I understand the generated alias does not
-          make the data anonymous.
+          check-ins in this profile, and to use the review fields to personalise
+          AI evidence briefings. I understand the generated alias does not make
+          the data anonymous.
         </label>
         {error && <p className="account-message">{error}</p>}
       </div>
@@ -975,7 +995,10 @@ function Review({
   const [form, setForm] = useState(initial);
   const set = <K extends keyof Assessment>(key: K, value: Assessment[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
-  const toggle = (key: "motivations" | "conditions", value: string) =>
+  const toggle = (
+    key: "motivations" | "conditions" | "methodsTried",
+    value: string,
+  ) =>
     set(
       key,
       (form[key] as string[]).includes(value)
@@ -1077,6 +1100,35 @@ function Review({
               </select>
             </label>
             <label>
+              Longest time you previously stopped
+              <select
+                value={form.longestQuit}
+                onChange={(e) =>
+                  set("longestQuit", e.target.value as Assessment["longestQuit"])
+                }
+              >
+                <option value="not-applicable">Not applicable</option>
+                <option value="under-day">Less than a day</option>
+                <option value="days">Several days</option>
+                <option value="weeks">Several weeks</option>
+                <option value="months-plus">Several months or longer</option>
+              </select>
+            </label>
+            <label>
+              Current vaping
+              <select
+                value={form.vaping}
+                onChange={(e) =>
+                  set("vaping", e.target.value as Assessment["vaping"])
+                }
+              >
+                <option value="no">No</option>
+                <option value="sometimes">Sometimes</option>
+                <option value="daily">Daily</option>
+                <option value="prefer-not-to-say">Prefer not to say</option>
+              </select>
+            </label>
+            <label>
               Optional price for 20 cigarettes (£)
               <input
                 type="number"
@@ -1091,6 +1143,33 @@ function Review({
                 }
               />
             </label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>What have you tried before?</legend>
+          <p className="hint">
+            This helps the evidence briefing avoid treating every attempt as a
+            first attempt.
+          </p>
+          <div className="chips">
+            {[
+              ["single-form NRT", "One nicotine-replacement product"],
+              ["combination NRT", "Combined nicotine replacement"],
+              ["prescribed stop-smoking medicine", "A prescribed medicine"],
+              ["nicotine e-cigarette", "A nicotine e-cigarette"],
+              ["behavioural support", "Behavioural or adviser support"],
+              ["self-help", "An app, book or self-help"],
+              ["without support", "Stopping without support"],
+            ].map(([value, label]) => (
+              <button
+                type="button"
+                aria-pressed={form.methodsTried.includes(value)}
+                key={value}
+                onClick={() => toggle("methodsTried", value)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </fieldset>
         <fieldset>
@@ -1305,6 +1384,10 @@ function EvidencePage({
         : "Exploring options",
   ];
   const hasCopd = assessment.conditions.includes("copd");
+  const aiProfileRows = profileDisplayRows(assessment);
+  const profileLabels = Object.fromEntries(
+    AI_PROFILE_FIELDS.map((field, index) => [field, aiProfileRows[index][0]]),
+  ) as Record<AiProfileField, string>;
   return (
     <section className="content">
       <PageHead
@@ -1355,6 +1438,34 @@ function EvidencePage({
           <span key={factor}>{factor}</span>
         ))}
       </div>
+      <details className="ai-profile-context">
+        <summary>
+          <span>
+            <Sparkles size={18} />
+            <strong>All {AI_PROFILE_FIELDS.length} profile details are available to the AI</strong>
+          </span>
+          <small>
+            Identity details and your generated account alias are not included
+          </small>
+          <ChevronDown size={19} />
+        </summary>
+        <div>
+          <p>
+            These are sent with each evidence briefing and follow-up so the AI
+            can interpret the reviewed literature in context. A field may be
+            considered without changing the recommendation when the literature
+            does not support a stronger link.
+          </p>
+          <dl>
+            {aiProfileRows.map(([label, value]) => (
+              <div key={label}>
+                <dt>{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </details>
 
       <section className="evidence-brief" aria-live="polite">
         {briefStatus === "loading" && (
@@ -1445,6 +1556,50 @@ function EvidencePage({
                   );
                 })}
               </div>
+            )}
+            {brief.personalised_strategy && (
+              <section className="personalised-strategy">
+                <div className="strategy-heading">
+                  <div>
+                    <p className="eyebrow">Evidence into an approach</p>
+                    <h3>{brief.personalised_strategy.headline}</h3>
+                    <p>{brief.personalised_strategy.summary}</p>
+                  </div>
+                  <span>
+                    <Check size={16} />
+                    {brief.profile_factors_used?.length ?? 0} of{" "}
+                    {AI_PROFILE_FIELDS.length} profile fields considered
+                  </span>
+                </div>
+                <div className="strategy-steps">
+                  {brief.personalised_strategy.steps.map((step, index) => (
+                    <article key={`${step.title}-${index}`}>
+                      <span className="strategy-number">{index + 1}</span>
+                      <div>
+                        <h4>{step.title}</h4>
+                        <p>{step.explanation}</p>
+                        <div className="strategy-matches">
+                          <strong>Matched to:</strong>{" "}
+                          {step.matched_factors
+                            .map((field) => profileLabels[field])
+                            .join(", ")}
+                        </div>
+                        {step.needs_professional_discussion && (
+                          <p className="professional-note">
+                            A stop-smoking adviser, pharmacist or clinician
+                            should discuss suitability with you.
+                          </p>
+                        )}
+                        <EvidenceCitations
+                          ids={step.evidence_ids}
+                          records={records}
+                          onOpen={openReference}
+                        />
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
             )}
             <div className="brief-points">
               {brief.key_points?.map((point, index) => (
