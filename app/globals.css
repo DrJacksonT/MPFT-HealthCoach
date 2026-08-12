@@ -605,6 +605,74 @@ a {
   gap: 8px;
   flex: none;
 }
+.account-panel {
+  max-width: 1120px;
+  margin: 0 auto 45px;
+  background: #eef6fb;
+  border: 1px solid #b9d3e8;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.account-panel > svg {
+  color: var(--teal);
+  flex: none;
+}
+.account-panel > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+.account-panel small {
+  color: var(--teal);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+}
+.account-panel span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.account-panel > a:not(.primary) {
+  color: var(--teal);
+  font-weight: 750;
+}
+.account-panel.compact {
+  max-width: none;
+  margin: 0;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  padding: 10px max(20px, calc((100vw - 1120px) / 2));
+}
+.account-create-copy label {
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 9px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+.account-create-copy input {
+  width: 18px;
+  min-height: 18px;
+  margin: 1px 0 0;
+}
+.account-message {
+  color: var(--red);
+  font-size: 12px;
+  margin: 8px 0 0;
+}
+.account-error {
+  background: #fff3f1;
+  border-color: #efc0ba;
+}
+.loading-account {
+  color: var(--muted);
+  min-height: 70px;
+}
 footer {
   border-top: 1px solid var(--line);
   display: flex;
@@ -1570,6 +1638,27 @@ input[type="range"] {
   font: 400 34px Georgia;
   color: var(--teal);
 }
+.journey-insight {
+  background: #eef6fb;
+  border: 1px solid #b9d3e8;
+  border-radius: 11px;
+  display: flex;
+  gap: 15px;
+  margin-bottom: 24px;
+  padding: 20px;
+}
+.journey-insight > svg {
+  color: var(--teal);
+  flex: none;
+}
+.journey-insight h2 {
+  font: 400 25px Georgia;
+  margin: 0;
+}
+.journey-insight p:last-child {
+  color: var(--muted);
+  margin: 4px 0 0;
+}
 .stats strong.small-stat {
   font-size: 22px;
 }
@@ -1973,10 +2062,18 @@ td {
     grid-template-columns: 1fr;
   }
   .landing-demo-notice,
-  .demo-mode-bar {
+  .demo-mode-bar,
+  .account-panel {
     align-items: flex-start;
     flex-direction: column;
     padding: 12px 20px;
+  }
+  .account-panel:not(.compact) {
+    margin: 0 20px 35px;
+  }
+  .account-panel > button,
+  .account-panel > a.primary {
+    width: 100%;
   }
   .demo-mode-actions {
     flex-wrap: wrap;

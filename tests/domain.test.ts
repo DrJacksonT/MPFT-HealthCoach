@@ -10,6 +10,7 @@ import {
   findEvidence,
   getEligibleEvidence,
   isEligibleEvidence,
+  rankEvidence,
 } from "@/src/data/evidence";
 import { demoStateSchema } from "@/src/domain/state-schema";
 import { coachRequestSchema } from "@/src/ai/schemas";
@@ -102,6 +103,22 @@ describe("verified evidence boundary", () => {
       if (x.effectValue || x.absoluteEffect)
         expect(x.doi || x.url).toBeTruthy();
     }
+  });
+  it("includes condition-specific COPD evidence", () => {
+    const eligible = getEligibleEvidence();
+    expect(eligible.some((item) => item.id === "nice-copd-smoking-risk")).toBe(
+      true,
+    );
+    expect(
+      eligible.some((item) => item.id === "nice-copd-prognosis-factors"),
+    ).toBe(true);
+    expect(
+      rankEvidence(
+        ["overall", "cessation-support", "copd", "reduce", "confidence"],
+        2,
+        ["copd"],
+      ).map((item) => item.id),
+    ).toEqual(["nice-copd-smoking-risk", "nice-copd-prognosis-factors"]);
   });
 });
 describe("safety routes", () => {

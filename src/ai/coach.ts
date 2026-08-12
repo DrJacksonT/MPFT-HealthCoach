@@ -35,6 +35,7 @@ export async function generateCoachReply(
   message: string,
   evidence: EvidenceRecord[],
   context: Partial<Assessment>,
+  safetyIdentifier?: string | null,
 ) {
   if (!process.env.OPENAI_API_KEY)
     return {
@@ -60,6 +61,7 @@ export async function generateCoachReply(
   const response = await client.responses.parse({
     model,
     store: false,
+    ...(safetyIdentifier ? { safety_identifier: safetyIdentifier } : {}),
     reasoning: { effort: "low" },
     max_output_tokens: 1_800,
     input: [

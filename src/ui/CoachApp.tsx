@@ -81,6 +81,25 @@ interface EvidenceBrief {
   follow_up_suggestions?: string[];
   message?: string;
 }
+type AccountStatus = "loading" | "none" | "ready" | "unavailable" | "error";
+interface PseudonymousAccount {
+  alias: string;
+  createdAt: string;
+  consentVersion: string;
+}
+interface AccountInsights {
+  progress?: {
+    check_in_count?: number;
+    smoke_free_check_ins?: number;
+    average_cigarettes?: number | null;
+  } | null;
+  usage?: {
+    request_count?: number;
+    input_tokens?: number;
+    output_tokens?: number;
+    approximate_cost_usd?: number;
+  } | null;
+}
 
 const STORAGE_KEY = "evidence-coach-demo-v1";
 const empty: DemoState = { version: 1, synthetic: true, checkIns: [] };
@@ -204,6 +223,11 @@ export function CoachApp({
   const [state, setState] = useState<DemoState>(empty);
   const [view, setView] = useState<View>("landing");
   const [hydrated, setHydrated] = useState(false);
+  const [account, setAccount] = useState<PseudonymousAccount | null>(null);
+  const [accountInsights, setAccountInsights] = useState<AccountInsights | null>(
+    null,
+  );
+  const [accountStatus, setAccountStatus] = useState<AccountStatus>("loading");
   /* localStorage is an external browser store. Hydration intentionally restores it once. */
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -252,6 +276,50 @@ export function CoachApp({
       // Storage can be unavailable or full. The in-memory prototype still works.
     }
   }, [state, hydrated]);
+  useEffect(() => {
+    if (!hydrated) return;
+    const controller = new AbortController();
+    fetch("/api/account", { signal: controller.signal })
+      .then(async (response) => {
+        const data = (await response.json()) as {
+          account?: PseudonymousAccount | null;
+          state?: DemoState;
+          insights?: AccountInsights;
+        };
+        if (response.status === 401) {
+          setAccountStatus("unavailable");
+          return;
+        }
+        if (!response.ok) throw new Error();
+        if (!data.account) {
+          setAccountStatus("none");
+          return;
+        }
+        setAccount(data.account);
+        setAccountInsights(data.insights ?? null);
+        setAccountStatus("ready");
+        if (data.state?.assessment) {
+          setState(data.state);
+          setView("evidence");
+        }
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setAccountStatus("error");
+      });
+    return () => controller.abort();
+  }, [hydrated]);
+  useEffect(() => {
+    if (accountStatus !== "ready" || !account || state.synthetic) return;
+    const timeout = window.setTimeout(() => {
+      fetch("/api/account", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(state),
+      }).catch(() => undefined);
+    }, 500);
+    return () => window.clearTimeout(timeout);
+  }, [account, accountStatus, state]);
   const assessment = state.assessment;
   const ranked = useMemo(() => {
     const tags = assessment ? smokingModule.evidenceTags(assessment) : [];
@@ -259,7 +327,15 @@ export function CoachApp({
       .map((item) => ({
         item,
         score: item.applicabilityTags.reduce(
-          (n, tag) => n + (tags.includes(tag) ? 2 : tag === "overall" ? 1 : 0),
+          (n, tag) =>
+            n +
+            (assessment?.conditions.some((condition) => condition === tag)
+              ? 10
+              : tags.includes(tag)
+                ? 2
+                : tag === "overall"
+                  ? 1
+                  : 0),
           0,
         ),
       }))
@@ -267,7 +343,7 @@ export function CoachApp({
         (a, b) =>
           b.score - a.score || b.item.publicationYear - a.item.publicationYear,
       )
-      .slice(0, 6)
+      .slice(0, 8)
       .map((x) => x.item);
   }, [evidence, assessment]);
   function loadPersona(name: string) {
@@ -294,16 +370,59 @@ export function CoachApp({
     setState(empty);
     setView("landing");
   }
+  async function createAccount() {
+    const response = await fetch("/api/account", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        acceptsHealthDataStorage: true,
+        state: state.synthetic ? undefined : state,
+      }),
+    });
+    const data = (await response.json()) as {
+      account?: PseudonymousAccount;
+      message?: string;
+    };
+    if (!response.ok || !data.account) throw new Error(data.message);
+    setAccount(data.account);
+    setAccountInsights({
+      progress: { check_in_count: state.checkIns.length },
+      usage: { request_count: 0 },
+    });
+    setAccountStatus("ready");
+  }
+  async function deleteAccount() {
+    const response = await fetch("/api/account", { method: "DELETE" });
+    if (!response.ok) throw new Error("Could not delete profile");
+    setAccount(null);
+    setAccountInsights(null);
+    setAccountStatus("none");
+    deleteData();
+  }
   const activePersonaName =
     state.personaName ??
     (state.synthetic ? findPersonaName(assessment) : undefined);
-  if (!hydrated) return <Landing onStart={() => {}} onPersona={() => {}} />;
+  if (!hydrated)
+    return (
+      <Landing
+        onStart={() => {}}
+        onPersona={() => {}}
+        accountStatus="loading"
+        account={null}
+        insights={null}
+        onCreateAccount={async () => {}}
+      />
+    );
   if (view === "landing")
     return (
       <Landing
         onStart={startOwnReview}
         onPersona={loadPersona}
         activePersonaName={activePersonaName}
+        accountStatus={accountStatus}
+        account={account}
+        insights={accountInsights}
+        onCreateAccount={createAccount}
       />
     );
   return (
@@ -320,6 +439,15 @@ export function CoachApp({
           personaName={activePersonaName ?? "Fictional profile"}
           onChange={() => setView("landing")}
           onStartOwn={startOwnReview}
+        />
+      )}
+      {!state.synthetic && (
+        <AccountPanel
+          compact
+          status={accountStatus}
+          account={account}
+          insights={accountInsights}
+          onCreate={createAccount}
         />
       )}
       <main id="main-content" className="main-content">
@@ -360,6 +488,7 @@ export function CoachApp({
             assessment={assessment}
             goal={state.goal}
             checkIns={state.checkIns}
+            savedToProfile={Boolean(account)}
             onCheckIn={(c) =>
               setState((s) => ({ ...s, checkIns: [...s.checkIns, c] }))
             }
@@ -369,7 +498,12 @@ export function CoachApp({
           <Coach assessment={assessment} records={ranked} />
         )}
         {view === "help" && (
-          <Help onDelete={deleteData} showDeveloperLinks={showDeveloperLinks} />
+          <Help
+            onDelete={deleteData}
+            onDeleteAccount={account ? deleteAccount : undefined}
+            account={account}
+            showDeveloperLinks={showDeveloperLinks}
+          />
         )}
         {!assessment && view !== "review" && (
           <EmptyReview onStart={() => setView("review")} />
@@ -415,14 +549,132 @@ function DemoModeBar({
     </aside>
   );
 }
+function AccountPanel({
+  status,
+  account,
+  insights,
+  onCreate,
+  compact = false,
+}: {
+  status: AccountStatus;
+  account: PseudonymousAccount | null;
+  insights: AccountInsights | null;
+  onCreate: () => Promise<void>;
+  compact?: boolean;
+}) {
+  const [accepted, setAccepted] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  if (status === "loading")
+    return compact ? null : (
+      <section className="account-panel loading-account" aria-live="polite">
+        Checking for a saved profile…
+      </section>
+    );
+  if (status === "ready" && account)
+    return (
+      <section className={`account-panel account-ready ${compact ? "compact" : ""}`}>
+        <LockKeyhole />
+        <div>
+          <small>PSEUDONYMOUS PROFILE</small>
+          <strong>{account.alias}</strong>
+          <span>
+            Your review, goals and check-ins are saved to this profile.
+            {insights?.progress?.check_in_count
+              ? ` ${insights.progress.check_in_count} check-ins, ${insights.progress.smoke_free_check_ins ?? 0} smoke-free.`
+              : ""}
+            {insights?.usage?.request_count
+              ? ` ${insights.usage.request_count} AI requests recorded.`
+              : ""}
+          </span>
+        </div>
+        <a href="/signout-with-chatgpt?return_to=/">Sign out</a>
+      </section>
+    );
+  if (status === "unavailable")
+    return (
+      <section className={`account-panel ${compact ? "compact" : ""}`}>
+        <LockKeyhole />
+        <div>
+          <strong>Sign in to save your journey</strong>
+          <span>
+            We use your sign-in only to return you to the same generated profile.
+          </span>
+        </div>
+        <a className="primary" href="/signin-with-chatgpt?return_to=/">
+          Sign in
+        </a>
+      </section>
+    );
+  if (status === "error")
+    return compact ? null : (
+      <section className="account-panel account-error">
+        <CircleAlert />
+        <div>
+          <strong>Profile storage is not available</strong>
+          <span>Your current browser copy still works.</span>
+        </div>
+      </section>
+    );
+  return (
+    <section className={`account-panel ${compact ? "compact" : ""}`}>
+      <LockKeyhole />
+      <div className="account-create-copy">
+        <small>OPTIONAL PSEUDONYMOUS PROFILE</small>
+        <strong>Save your progress without giving us your name</strong>
+        <span>
+          We generate an alias such as “Quiet-Wren-4821”. Your alias reduces
+          identification risk, but your health information is still personal data.
+        </span>
+        <label>
+          <input
+            type="checkbox"
+            checked={accepted}
+            onChange={(event) => setAccepted(event.target.checked)}
+          />
+          I agree to store my smoking review, selected health areas, goals and
+          check-ins in this profile. I understand the generated alias does not
+          make the data anonymous.
+        </label>
+        {error && <p className="account-message">{error}</p>}
+      </div>
+      <button
+        className="primary"
+        type="button"
+        disabled={!accepted || busy}
+        onClick={async () => {
+          setBusy(true);
+          setError("");
+          try {
+            await onCreate();
+          } catch {
+            setError("We could not create the profile. Please try again.");
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? "Creating profile…" : "Create my generated profile"}
+      </button>
+    </section>
+  );
+}
 function Landing({
   onStart,
   onPersona,
   activePersonaName,
+  accountStatus,
+  account,
+  insights,
+  onCreateAccount,
 }: {
   onStart: () => void;
   onPersona: (name: string) => void;
   activePersonaName?: string;
+  accountStatus: AccountStatus;
+  account: PseudonymousAccount | null;
+  insights: AccountInsights | null;
+  onCreateAccount: () => Promise<void>;
 }) {
   const [selectedPersona, setSelectedPersona] = useState<string | null>(
     activePersonaName ?? null,
@@ -515,6 +767,12 @@ function Landing({
           </p>
         </div>
       </section>
+      <AccountPanel
+        status={accountStatus}
+        account={account}
+        insights={insights}
+        onCreate={onCreateAccount}
+      />
       <section className="capabilities" id="capabilities">
         <div>
           <p className="eyebrow">A guided programme, not a blank chatbot</p>
@@ -1804,11 +2062,13 @@ function Progress({
   assessment,
   goal,
   checkIns,
+  savedToProfile,
   onCheckIn,
 }: {
   assessment: Assessment;
   goal?: Goal;
   checkIns: CheckIn[];
+  savedToProfile: boolean;
   onCheckIn: (c: CheckIn) => void;
 }) {
   const [open, setOpen] = useState(checkIns.length === 0);
@@ -1826,6 +2086,19 @@ function Progress({
     ...checkIns.map((x) => x.cigarettes),
     1,
   );
+  const recentCheckIns = checkIns.slice(-3);
+  const recentAverage = recentCheckIns.length
+    ? recentCheckIns.reduce((total, item) => total + item.cigarettes, 0) /
+      recentCheckIns.length
+    : null;
+  const commonTrigger = checkIns.length
+    ? Object.entries(
+        checkIns.reduce<Record<string, number>>((counts, item) => {
+          counts[item.trigger] = (counts[item.trigger] ?? 0) + 1;
+          return counts;
+        }, {}),
+      ).sort((a, b) => b[1] - a[1])[0]?.[0]
+    : undefined;
   return (
     <section className="content">
       <PageHead
@@ -1837,7 +2110,11 @@ function Progress({
         <article>
           <small>CHECK-INS</small>
           <strong>{checkIns.length}</strong>
-          <span>stored locally</span>
+          <span>
+            {checkIns.filter((item) => item.cigarettes === 0).length} smoke-free ·{" "}
+            {checkIns.filter((item) => item.cigarettes > 0).length} smoking
+            {savedToProfile ? " · saved to profile" : " · this browser"}
+          </span>
         </article>
         <article>
           <small>EST. CIGARETTES AVOIDED</small>
@@ -1861,6 +2138,28 @@ function Progress({
           <span>{goal?.title ?? "Choose one in My plan"}</span>
         </article>
       </div>
+      {checkIns.length > 0 && (
+        <div className="journey-insight">
+          <Sparkles />
+          <div>
+            <p className="eyebrow">Your recorded pattern</p>
+            <h2>
+              {recentAverage !== null &&
+              recentAverage < assessment.cigarettesPerDay
+                ? "Your recent check-ins are below your starting number"
+                : "Your check-ins are building a clearer picture"}
+            </h2>
+            <p>
+              {recentAverage !== null
+                ? `Your latest ${recentCheckIns.length} recorded ${recentCheckIns.length === 1 ? "day shows" : "days show"} an average of ${recentAverage.toFixed(1)} cigarettes.`
+                : ""}
+              {commonTrigger ? ` Your most recorded trigger is ${commonTrigger}.` : ""}
+              {" "}This describes only the days you entered; missing days are not
+              guessed.
+            </p>
+          </div>
+        </div>
+      )}
       {checkIns.length > 0 && (
         <div className="chart-card">
           <h2>Cigarettes per check-in</h2>
@@ -2131,9 +2430,13 @@ function Coach({
 
 function Help({
   onDelete,
+  onDeleteAccount,
+  account,
   showDeveloperLinks,
 }: {
   onDelete: () => void;
+  onDeleteAccount?: () => Promise<void>;
+  account: PseudonymousAccount | null;
   showDeveloperLinks: boolean;
 }) {
   return (
@@ -2158,18 +2461,26 @@ function Help({
       <div className="help-grid">
         <article>
           <LockKeyhole />
-          <h2>Your demo data</h2>
+          <h2>{account ? `Profile ${account.alias}` : "Your demo data"}</h2>
           <p>
-            Your structured review, goals and check-ins are stored in this
-            browser’s local storage. Evidence is application data. If the
-            optional AI coach is configured, your message plus a small
-            structured context is sent from the server to OpenAI with{" "}
+            {account
+              ? "Your structured review, selected health areas, goals, check-ins and account-level API usage are stored under a generated alias. The service still treats this as personal health data. "
+              : "Your structured review, goals and check-ins are stored in this browser. "}
+            Evidence is application data. If the optional AI coach is
+            configured, your message plus structured profile context is sent
+            from the server to OpenAI with{" "}
             <code>store: false</code>. This setting is not a full zero data
             retention guarantee.
           </p>
-          <button className="danger" onClick={onDelete}>
-            <Trash2 size={17} /> Delete my demo data
-          </button>
+          {account && onDeleteAccount ? (
+            <button className="danger" onClick={() => void onDeleteAccount()}>
+              <Trash2 size={17} /> Delete my profile and journey
+            </button>
+          ) : (
+            <button className="danger" onClick={onDelete}>
+              <Trash2 size={17} /> Delete my demo data
+            </button>
+          )}
         </article>
         <article>
           <ShieldCheck />

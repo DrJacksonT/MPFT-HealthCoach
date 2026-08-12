@@ -66,6 +66,7 @@ const fallback = (
 export async function generateEvidenceBrief(
   evidence: EvidenceRecord[],
   context: Assessment,
+  safetyIdentifier?: string | null,
 ) {
   if (!process.env.OPENAI_API_KEY)
     return {
@@ -100,6 +101,7 @@ export async function generateEvidenceBrief(
   const response = await client.responses.parse({
     model,
     store: false,
+    ...(safetyIdentifier ? { safety_identifier: safetyIdentifier } : {}),
     reasoning: { effort: "low" },
     max_output_tokens: 2_500,
     input: [

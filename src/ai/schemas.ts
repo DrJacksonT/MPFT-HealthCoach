@@ -40,7 +40,7 @@ export const coachRequestSchema = z.object({
   message: z.string().trim().min(1).max(800),
   evidenceIds: z
     .array(z.string().min(1).max(100).regex(/^[a-z0-9-]+$/))
-    .max(6)
+    .max(10)
     .transform((ids) => [...new Set(ids)])
     .default([]),
   context: assessmentContextSchema.partial().default({}),
@@ -76,7 +76,7 @@ export const evidenceBriefRequestSchema = z.object({
   evidenceIds: z
     .array(z.string().min(1).max(100).regex(/^[a-z0-9-]+$/))
     .min(1)
-    .max(8)
+    .max(10)
     .transform((ids) => [...new Set(ids)]),
   context: assessmentContextSchema,
 });

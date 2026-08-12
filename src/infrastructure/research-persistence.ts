@@ -6,7 +6,7 @@ export class DisabledResearchParticipantRepository implements ResearchParticipan
   async saveParticipantState(state: DemoState): Promise<void> {
     void state;
     throw new Error(
-      "Remote participant persistence is disabled. NHS information-governance, research classification, clinical-safety and security approval are required before an adapter may be implemented or enabled.",
+      "Research-dataset export is disabled. The separate, user-consented pseudonymous account store must not be reused as a research export without NHS information-governance, research classification, clinical-safety and security approval.",
     );
   }
 }

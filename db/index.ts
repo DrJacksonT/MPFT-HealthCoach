@@ -3,6 +3,10 @@ import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
 
 export function getDb() {
+  return drizzle(getD1(), { schema });
+}
+
+export function getD1() {
   const runtimeEnv = env as typeof env & { DB?: D1Database };
 
   if (!runtimeEnv.DB) {
@@ -11,5 +15,5 @@ export function getDb() {
     );
   }
 
-  return drizzle(runtimeEnv.DB, { schema });
+  return runtimeEnv.DB;
 }

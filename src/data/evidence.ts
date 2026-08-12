@@ -111,6 +111,65 @@ export const evidenceRecords: readonly EvidenceRecord[] = Object.freeze([
     evidenceConfidence: "high",
   }),
   verifiedRecord({
+    id: "nice-copd-smoking-risk",
+    title:
+      "Chronic obstructive pulmonary disease in over 16s: smoking cessation and exacerbation risk",
+    organisation: "NICE",
+    publicationYear: 2019,
+    publicationDate: "2019-07-26",
+    url: "https://www.nice.org.uk/guidance/ng115/chapter/Recommendations",
+    sourceType: "guideline",
+    studyDesign: "National evidence-based guideline",
+    population: "Adults with COPD who currently smoke",
+    interventionOrExposure: "Continued smoking or stopping smoking",
+    outcome: "COPD progression and exacerbations",
+    timeframe: "Ongoing COPD management",
+    mainFinding:
+      "NICE identifies continued smoking or relapse as a factor that increases the risk of COPD exacerbations. It recommends encouraging every person with COPD who still smokes to stop, regardless of age, and offering support to improve quit rates.",
+    patientFriendlySummary:
+      "If you have COPD and smoke, this evidence is directly relevant. Continuing to smoke raises the risk of COPD flare-ups. Stopping can help prevent further damage, whatever your age.",
+    applicabilityTags: ["copd", "health", "quit", "reduce"],
+    limitations: [
+      "The guideline does not calculate one person's chance of an exacerbation.",
+      "Cigarettes per day is only one part of COPD risk and prognosis.",
+      "Symptoms or a suspected exacerbation need clinical assessment, which this prototype cannot provide.",
+    ],
+    riskOfBiasNotes:
+      "Guideline recommendations draw on evidence reviews and committee interpretation; this record does not create a new individual risk model.",
+    evidenceConfidence: "high",
+    verificationNotes:
+      "Directly matched on 12 August 2026 to NICE NG115 recommendations 1.2.2 to 1.2.5 and 1.2.123 on smoking history, cessation support and exacerbation risk.",
+  }),
+  verifiedRecord({
+    id: "nice-copd-prognosis-factors",
+    title:
+      "Chronic obstructive pulmonary disease in over 16s: factors used when discussing prognosis",
+    organisation: "NICE",
+    publicationYear: 2019,
+    publicationDate: "2019-07-26",
+    url: "https://www.nice.org.uk/guidance/ng115/chapter/Recommendations",
+    sourceType: "guideline",
+    studyDesign: "National evidence-based guideline",
+    population: "Adults with diagnosed COPD",
+    interventionOrExposure: "Clinical prognostic assessment",
+    outcome: "COPD prognosis",
+    timeframe: "From diagnosis and during follow-up",
+    mainFinding:
+      "NICE advises that COPD prognosis should be discussed using several factors, including smoking status, symptoms, exacerbation frequency, exercise capacity, lung function, oxygen status, body mass index and comorbidities. No single measure should be used alone.",
+    patientFriendlySummary:
+      "COPD outlook cannot be judged from cigarettes per day alone. Smoking still matters, but symptoms, flare-ups, lung tests, activity and other health conditions also change the picture.",
+    applicabilityTags: ["copd", "health", "learn"],
+    limitations: [
+      "The current review does not collect lung function, oxygen level, symptom score, body mass index or exacerbation history.",
+      "This guidance supports a clinician-led prognosis discussion, not an automated diagnosis or exact personal forecast.",
+    ],
+    riskOfBiasNotes:
+      "This is a guideline framework for clinical assessment rather than a validated calculator embedded in this application.",
+    evidenceConfidence: "high",
+    verificationNotes:
+      "Directly matched on 12 August 2026 to NICE NG115 recommendations on prognosis and routine COPD review factors.",
+  }),
+  verifiedRecord({
     id: "cochrane-combination-nrt-2023",
     title:
       "Different doses, durations and modes of delivery of nicotine replacement therapy for smoking cessation",
@@ -552,11 +611,23 @@ export function getEligibleEvidence() {
   return evidenceRecords.filter((item) => isEligibleEvidence(item, today));
 }
 
-export function rankEvidence(tags: string[], limit = 6) {
+export function rankEvidence(
+  tags: string[],
+  limit = 6,
+  priorityTags: string[] = [],
+) {
   const scored = getEligibleEvidence().map((item) => ({
     item,
     score: item.applicabilityTags.reduce(
-      (n, tag) => n + (tags.includes(tag) ? 2 : tag === "overall" ? 1 : 0),
+      (n, tag) =>
+        n +
+        (priorityTags.includes(tag)
+          ? 10
+          : tags.includes(tag)
+            ? 2
+            : tag === "overall"
+              ? 1
+              : 0),
       0,
     ),
   }));

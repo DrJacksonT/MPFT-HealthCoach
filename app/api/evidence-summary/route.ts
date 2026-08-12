@@ -2,6 +2,10 @@ import { evidenceBriefRequestSchema } from "@/src/ai/schemas";
 import { generateEvidenceBrief } from "@/src/ai/evidence-brief";
 import { findEvidence } from "@/src/data/evidence";
 import { addTelemetry } from "@/src/telemetry/store";
+import {
+  getSafetyIdentifier,
+  recordAccountUsage,
+} from "@/src/infrastructure/accounts";
 
 const noStore = { "cache-control": "no-store, max-age=0", pragma: "no-cache" };
 
@@ -30,19 +34,27 @@ export async function POST(request: Request) {
         { kind: "error", message: "No eligible evidence was selected." },
         { status: 400, headers: noStore },
       );
-    const result = await generateEvidenceBrief(evidence, parsed.data.context);
+    const result = await generateEvidenceBrief(
+      evidence,
+      parsed.data.context,
+      await getSafetyIdentifier(request),
+    );
     const usage = result.usage as {
       input_tokens?: number;
       output_tokens?: number;
     } | null;
-    addTelemetry({
+    const telemetry = {
       at: new Date().toISOString(),
       model: result.model,
       inputTokens: usage?.input_tokens ?? 0,
       outputTokens: usage?.output_tokens ?? 0,
       latencyMs: result.latencyMs,
       ok: true,
-    });
+    };
+    addTelemetry(telemetry);
+    await recordAccountUsage(request, "evidence-summary", telemetry).catch(
+      () => undefined,
+    );
     return Response.json(
       {
         kind: "evidence-brief",
@@ -53,7 +65,7 @@ export async function POST(request: Request) {
       { headers: noStore },
     );
   } catch {
-    addTelemetry({
+    const telemetry = {
       at: new Date().toISOString(),
       model:
         process.env.OPENAI_EVIDENCE_MODEL ??
@@ -63,7 +75,11 @@ export async function POST(request: Request) {
       outputTokens: 0,
       latencyMs: Date.now() - started,
       ok: false,
-    });
+    };
+    addTelemetry(telemetry);
+    await recordAccountUsage(request, "evidence-summary", telemetry).catch(
+      () => undefined,
+    );
     return Response.json(
       {
         kind: "error",

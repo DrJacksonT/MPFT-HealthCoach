@@ -3,6 +3,10 @@ import { generateCoachReply } from "@/src/ai/coach";
 import { classifySafety, safetyResponse } from "@/src/domain/safety";
 import { findEvidence } from "@/src/data/evidence";
 import { addTelemetry } from "@/src/telemetry/store";
+import {
+  getSafetyIdentifier,
+  recordAccountUsage,
+} from "@/src/infrastructure/accounts";
 
 const attempts = new Map<string, { count: number; reset: number }>();
 const noStore = { "cache-control": "no-store, max-age=0", pragma: "no-cache" };
@@ -70,19 +74,22 @@ export async function POST(request: Request) {
       body.message,
       evidence,
       body.context,
+      await getSafetyIdentifier(request),
     );
     const usage = result.usage as {
       input_tokens?: number;
       output_tokens?: number;
     } | null;
-    addTelemetry({
+    const telemetry = {
       at: new Date().toISOString(),
       model: result.model,
       inputTokens: usage?.input_tokens ?? 0,
       outputTokens: usage?.output_tokens ?? 0,
       latencyMs: result.latencyMs,
       ok: true,
-    });
+    };
+    addTelemetry(telemetry);
+    await recordAccountUsage(request, "coach", telemetry).catch(() => undefined);
     return Response.json(
       {
         kind: "coach",
@@ -100,14 +107,16 @@ export async function POST(request: Request) {
       { headers: noStore },
     );
   } catch {
-    addTelemetry({
+    const telemetry = {
       at: new Date().toISOString(),
       model: process.env.OPENAI_COACH_MODEL ?? "gpt-5.6-luna",
       inputTokens: 0,
       outputTokens: 0,
       latencyMs: Date.now() - started,
       ok: false,
-    });
+    };
+    addTelemetry(telemetry);
+    await recordAccountUsage(request, "coach", telemetry).catch(() => undefined);
     return Response.json(
       {
         kind: "error",
