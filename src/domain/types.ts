@@ -98,6 +98,7 @@ export interface CheckIn {
 export interface DemoState {
   version: 1;
   synthetic: boolean;
+  personaName?: string;
   savedAt?: string;
   assessment?: Assessment;
   goal?: Goal;

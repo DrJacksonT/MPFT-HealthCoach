@@ -59,6 +59,7 @@ const checkInSchema = z.object({
 export const demoStateSchema = z.object({
   version: z.literal(1),
   synthetic: z.boolean(),
+  personaName: z.string().max(100).optional(),
   savedAt: z.string().optional(),
   assessment: assessmentSchema.optional(),
   goal: goalSchema.optional(),

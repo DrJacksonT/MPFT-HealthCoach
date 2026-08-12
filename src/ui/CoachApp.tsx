@@ -136,6 +136,39 @@ const personas: Record<string, Assessment> = {
     packPrice: 15.5,
   },
 };
+const personaSummaries: Record<string, string> = {
+  "Family focus":
+    "In their 40s, with high blood pressure, motivated by family and health.",
+  "Breathing support":
+    "In their 60s, with COPD, aiming to reduce and low confidence.",
+  "Money & fitness":
+    "In their 30s, motivated by saving money and improving fitness.",
+  "Is it too late?":
+    "In their 50s, with diabetes and cardiovascular disease, unsure about quitting.",
+};
+const evidenceTagLabels: Record<string, string> = {
+  overall: "general quitting evidence",
+  "cessation-support": "stop-smoking support",
+  hypertension: "high blood pressure",
+  copd: "COPD",
+  cardiovascular: "heart and circulation",
+  family: "family",
+  health: "health",
+  breathing: "breathing",
+  independence: "independence",
+  money: "money",
+  fitness: "fitness",
+  diabetes: "diabetes",
+};
+function displayTag(tag: string) {
+  return evidenceTagLabels[tag] ?? tag.replaceAll("-", " ");
+}
+function findPersonaName(assessment?: Assessment) {
+  if (!assessment) return undefined;
+  return Object.entries(personas).find(
+    ([, persona]) => JSON.stringify(persona) === JSON.stringify(assessment),
+  )?.[0];
+}
 type View =
   "landing" | "review" | "evidence" | "plan" | "progress" | "coach" | "help";
 
@@ -162,7 +195,14 @@ export function CoachApp({
           Date.now() - new Date(parsed.data.savedAt).getTime() >
             30 * 24 * 60 * 60 * 1000;
         if (parsed.success && !tooOld) {
-          setState(parsed.data);
+          setState({
+            ...parsed.data,
+            personaName:
+              parsed.data.personaName ??
+              (parsed.data.synthetic
+                ? findPersonaName(parsed.data.assessment)
+                : undefined),
+          });
           setView(parsed.data.assessment ? "evidence" : "landing");
         } else localStorage.removeItem(STORAGE_KEY);
       }
@@ -209,8 +249,19 @@ export function CoachApp({
       .map((x) => x.item);
   }, [evidence, assessment]);
   function loadPersona(name: string) {
-    setState({ ...empty, synthetic: true, assessment: personas[name] });
+    const persona = personas[name];
+    if (!persona) return;
+    setState({
+      ...empty,
+      synthetic: true,
+      personaName: name,
+      assessment: persona,
+    });
     setView("evidence");
+  }
+  function startOwnReview() {
+    setState({ ...empty, synthetic: false });
+    setView("review");
   }
   function deleteData() {
     try {
@@ -221,10 +272,17 @@ export function CoachApp({
     setState(empty);
     setView("landing");
   }
+  const activePersonaName =
+    state.personaName ??
+    (state.synthetic ? findPersonaName(assessment) : undefined);
   if (!hydrated) return <Landing onStart={() => {}} onPersona={() => {}} />;
   if (view === "landing")
     return (
-      <Landing onStart={() => setView("review")} onPersona={loadPersona} />
+      <Landing
+        onStart={startOwnReview}
+        onPersona={loadPersona}
+        activePersonaName={activePersonaName}
+      />
     );
   return (
     <div className="app-shell">
@@ -235,12 +293,24 @@ export function CoachApp({
         hasAssessment={Boolean(assessment)}
         onDelete={deleteData}
       />
+      {state.synthetic && assessment && (
+        <DemoModeBar
+          personaName={activePersonaName ?? "Fictional profile"}
+          onChange={() => setView("landing")}
+          onStartOwn={startOwnReview}
+        />
+      )}
       <main id="main-content" className="main-content">
         {view === "review" && (
           <Review
             initial={assessment ?? baseAssessment}
             onComplete={(value) => {
-              setState((s) => ({ ...s, synthetic: false, assessment: value }));
+              setState((s) => ({
+                ...s,
+                synthetic: false,
+                personaName: undefined,
+                assessment: value,
+              }));
               setView("evidence");
             }}
           />
@@ -249,6 +319,8 @@ export function CoachApp({
           <EvidencePage
             assessment={assessment}
             records={ranked}
+            synthetic={state.synthetic}
+            personaName={activePersonaName}
             onPlan={() => setView("plan")}
           />
         )}
@@ -292,16 +364,61 @@ function PrototypeBanner() {
     </div>
   );
 }
+function DemoModeBar({
+  personaName,
+  onChange,
+  onStartOwn,
+}: {
+  personaName: string;
+  onChange: () => void;
+  onStartOwn: () => void;
+}) {
+  return (
+    <aside className="demo-mode-bar" aria-label="Active fictional demo">
+      <div>
+        <span className="demo-mode-label">DEMO MODE</span>
+        <strong>{personaName}</strong>
+        <small>Fictional details — not your information</small>
+      </div>
+      <div className="demo-mode-actions">
+        <button type="button" onClick={onChange}>
+          Change demo
+        </button>
+        <button type="button" onClick={onStartOwn}>
+          Start my own review
+        </button>
+      </div>
+    </aside>
+  );
+}
 function Landing({
   onStart,
   onPersona,
+  activePersonaName,
 }: {
   onStart: () => void;
   onPersona: (name: string) => void;
+  activePersonaName?: string;
 }) {
+  const [selectedPersona, setSelectedPersona] = useState<string | null>(
+    activePersonaName ?? null,
+  );
+  const selectedAssessment = selectedPersona
+    ? personas[selectedPersona]
+    : undefined;
   return (
     <main id="main-content">
       <PrototypeBanner />
+      {activePersonaName && (
+        <div className="landing-demo-notice">
+          <span>
+            <strong>Demo currently active:</strong> {activePersonaName}
+          </span>
+          <button type="button" onClick={onStart}>
+            End demo and start my own review
+          </button>
+        </div>
+      )}
       <section className="hero">
         <div className="hero-copy">
           <div className="brand">
@@ -426,30 +543,70 @@ function Landing({
         <div className="persona-section">
           <div>
             <span className="synthetic">PRESENTATION MODE</span>
-            <h2>Or load a synthetic demo</h2>
+            <h2>Try a fictional example</h2>
             <p>
-              Choose from four fictional profiles. None contains real patient
-              information.
+              First choose a fictional profile to preview. Nothing opens until
+              you confirm which demo you want to explore.
             </p>
           </div>
           <div className="persona-list">
             {Object.keys(personas).map((name, i) => (
-              <button key={name} onClick={() => onPersona(name)}>
-                <span>{String.fromCharCode(65 + i)}</span>
+              <button
+                key={name}
+                type="button"
+                aria-pressed={selectedPersona === name}
+                onClick={() => setSelectedPersona(name)}
+              >
+                <span className="persona-avatar">
+                  {String.fromCharCode(65 + i)}
+                </span>
                 <strong>{name}</strong>
-                <small>
-                  {i === 0
-                    ? "In their 40s, with high blood pressure, motivated by family"
-                    : i === 1
-                      ? "In their 60s, with COPD, confidence 3 out of 10"
-                      : i === 2
-                        ? "In their 30s, motivated by money and fitness"
-                        : "In their 50s, with diabetes, unsure about quitting"}
-                </small>
-                <ArrowRight size={16} />
+                <small>{personaSummaries[name]}</small>
+                <span className="persona-select-state">
+                  {selectedPersona === name ? <Check size={16} /> : "Preview"}
+                </span>
               </button>
             ))}
           </div>
+          {selectedPersona && selectedAssessment && (
+            <div className="persona-preview" aria-live="polite">
+              <div className="persona-preview-heading">
+                <span>SELECTED FICTIONAL DEMO</span>
+                <h3>{selectedPersona}</h3>
+                <p>{personaSummaries[selectedPersona]}</p>
+              </div>
+              <dl>
+                <div>
+                  <dt>Age band</dt>
+                  <dd>{selectedAssessment.ageBand}</dd>
+                </div>
+                <div>
+                  <dt>Smoking</dt>
+                  <dd>{selectedAssessment.cigarettesPerDay} a day</dd>
+                </div>
+                <div>
+                  <dt>Aim</dt>
+                  <dd>{selectedAssessment.intention}</dd>
+                </div>
+                <div>
+                  <dt>Confidence</dt>
+                  <dd>{selectedAssessment.confidence} out of 10</dd>
+                </div>
+              </dl>
+              <p className="persona-preview-explanation">
+                The next screen will rank evidence using this profile’s
+                motivations and health conditions, with general stop-smoking
+                evidence included too.
+              </p>
+              <button
+                className="primary"
+                type="button"
+                onClick={() => onPersona(selectedPersona)}
+              >
+                Open the {selectedPersona} demo <ArrowRight size={18} />
+              </button>
+            </div>
+          )}
         </div>
       </section>
       <Footer />
@@ -478,7 +635,11 @@ function TopBar({
   return (
     <>
       <header className="topbar">
-        <button className="logo-button" aria-label="Go to home" onClick={() => setView("landing")}>
+        <button
+          className="logo-button"
+          aria-label="Go to home"
+          onClick={() => setView("landing")}
+        >
           <img src="/mpft-logo.png" alt="" />
           <span className="top-product">
             <strong>Evidence Coach</strong>
@@ -790,38 +951,87 @@ function Review({
 function EvidencePage({
   assessment,
   records,
+  synthetic,
+  personaName,
   onPlan,
 }: {
   assessment: Assessment;
   records: EvidenceRecord[];
+  synthetic: boolean;
+  personaName?: string;
   onPlan: () => void;
 }) {
   const selected = [...assessment.motivations, ...assessment.conditions]
     .filter((x) => x !== "none" && x !== "prefer-not-to-say")
-    .map((x) => x.replace("-", " "));
+    .map(displayTag);
+  const rankingTags = smokingModule.evidenceTags(assessment);
   return (
     <section className="content">
       <PageHead
-        eyebrow="Your evidence review"
-        title="What quitting could mean for you"
-        text="We ranked reviewed population evidence using the broad categories you selected. It cannot predict exactly what will happen to you."
+        eyebrow={synthetic ? "Fictional demo evidence" : "Your evidence review"}
+        title={
+          synthetic
+            ? `${personaName ?? "Fictional profile"} demo`
+            : "What quitting could mean for you"
+        }
+        text={
+          synthetic
+            ? "You are exploring evidence for the fictional profile shown below. These are not your details and this is not a personal prediction."
+            : "We ranked reviewed population evidence using the broad categories you selected. It cannot predict exactly what will happen to you."
+        }
       />
+      {synthetic && (
+        <div className="demo-profile-card">
+          <div>
+            <span>FICTIONAL PROFILE</span>
+            <strong>{personaName ?? "Fictional profile"}</strong>
+            <p>
+              {personaName
+                ? personaSummaries[personaName]
+                : "A fictional set of details used only to demonstrate the tool."}
+            </p>
+          </div>
+          <dl>
+            <div>
+              <dt>Smoking</dt>
+              <dd>{assessment.cigarettesPerDay} cigarettes a day</dd>
+            </div>
+            <div>
+              <dt>Aim</dt>
+              <dd>{assessment.intention}</dd>
+            </div>
+            <div>
+              <dt>Confidence</dt>
+              <dd>{assessment.confidence}/10</dd>
+            </div>
+          </dl>
+        </div>
+      )}
       <div className="relevance-strip">
         <Sparkles />
         <div>
-          <strong>Why these cards?</strong>
+          <strong>How these cards were chosen</strong>
           <p>
             {selected.length
-              ? `They relate to the areas you selected: ${selected.join(", ")}.`
-              : "They cover the main benefits and sources of support."}{" "}
-            Normal application code ranks these cards. No model calculates your
-            risk.
+              ? `${synthetic ? "This profile" : "Your selections"} includes: ${selected.join(", ")}. `
+              : `${synthetic ? "This profile has" : "You selected"} no specific health areas. `}
+            Each card is scored against those details. General quitting and
+            stop-smoking support evidence is included, then the highest-scoring
+            cards appear first. No AI model chooses the order or calculates a
+            personal risk.
           </p>
         </div>
       </div>
       <div className="evidence-grid">
         {records.map((item, i) => (
-          <EvidenceCard key={item.id} item={item} primary={i === 0} />
+          <EvidenceCard
+            key={item.id}
+            item={item}
+            primary={i === 0}
+            matchingTags={item.applicabilityTags.filter((tag) =>
+              rankingTags.includes(tag),
+            )}
+          />
         ))}
       </div>
       <div className="next-panel">
@@ -840,9 +1050,11 @@ function EvidencePage({
 function EvidenceCard({
   item,
   primary,
+  matchingTags = [],
 }: {
   item: EvidenceRecord;
   primary?: boolean;
+  matchingTags?: string[];
 }) {
   return (
     <article className={`evidence-card ${primary ? "featured" : ""}`}>
@@ -852,6 +1064,11 @@ function EvidenceCard({
           <Check size={12} /> VERIFIED
         </span>
       </div>
+      {matchingTags.length > 0 && (
+        <p className="card-relevance">
+          <strong>Why shown:</strong> {matchingTags.map(displayTag).join(", ")}
+        </p>
+      )}
       <h2>{item.patientFriendlySummary}</h2>
       {item.absoluteEffect && (
         <div className="number-box">
@@ -1409,14 +1626,16 @@ function Help({
           </a>
         ))}
       </div>
-      {showDeveloperLinks && <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <a className="secondary inline" href="/admin/evidence">
-          Evidence dashboard <ArrowRight size={16} />
-        </a>
-        <a className="secondary inline" href="/admin/telemetry">
-          Development telemetry <ArrowRight size={16} />
-        </a>
-      </div>}
+      {showDeveloperLinks && (
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <a className="secondary inline" href="/admin/evidence">
+            Evidence dashboard <ArrowRight size={16} />
+          </a>
+          <a className="secondary inline" href="/admin/telemetry">
+            Development telemetry <ArrowRight size={16} />
+          </a>
+        </div>
+      )}
     </section>
   );
 }

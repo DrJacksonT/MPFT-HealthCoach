@@ -459,7 +459,7 @@ a {
 }
 .persona-list button {
   display: grid;
-  grid-template-columns: 32px 1fr 20px;
+  grid-template-columns: 32px 1fr auto;
   text-align: left;
   align-items: center;
   column-gap: 10px;
@@ -469,7 +469,12 @@ a {
   border-radius: 9px;
   padding: 12px;
 }
-.persona-list button > span {
+.persona-list button:hover,
+.persona-list button[aria-pressed="true"] {
+  background: #003d78;
+  border-color: white;
+}
+.persona-avatar {
   grid-row: 1/3;
   background: #dfeee8;
   color: var(--ink);
@@ -485,11 +490,120 @@ a {
 }
 .persona-list small {
   grid-column: 2;
-  color: #a9c3bf;
+  color: #d6e7f5;
 }
-.persona-list svg {
+.persona-select-state {
   grid-column: 3;
   grid-row: 1/3;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.persona-preview {
+  grid-column: 1 / -1;
+  background: white;
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 18px 28px;
+  align-items: start;
+}
+.persona-preview-heading span,
+.demo-profile-card > div > span {
+  color: var(--teal);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+}
+.persona-preview h3 {
+  font: 400 27px Georgia;
+  margin: 4px 0;
+}
+.persona-preview-heading p,
+.persona-preview-explanation {
+  color: var(--muted);
+  margin: 5px 0;
+}
+.persona-preview dl,
+.demo-profile-card dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+}
+.persona-preview dl div,
+.demo-profile-card dl div {
+  background: var(--pale);
+  border-radius: 7px;
+  padding: 10px 12px;
+}
+.persona-preview dt,
+.demo-profile-card dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.persona-preview dd,
+.demo-profile-card dd {
+  margin: 2px 0 0;
+  font-weight: 750;
+  text-transform: capitalize;
+}
+.persona-preview-explanation {
+  grid-column: 1 / -1;
+  font-size: 13px;
+}
+.persona-preview .primary {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+.landing-demo-notice,
+.demo-mode-bar {
+  background: #fff6e9;
+  border-bottom: 1px solid #e8c98f;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px max(20px, calc((100vw - 1120px) / 2));
+  font-size: 13px;
+}
+.landing-demo-notice button,
+.demo-mode-actions button {
+  background: transparent;
+  border: 0;
+  color: var(--teal);
+  font-weight: 800;
+  text-decoration: underline;
+}
+.demo-mode-bar > div:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.demo-mode-label {
+  background: #ffb81c;
+  border-radius: 4px;
+  color: #212b32;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  padding: 3px 7px;
+}
+.demo-mode-bar small {
+  color: var(--muted);
+}
+.demo-mode-actions {
+  display: flex;
+  gap: 8px;
+  flex: none;
 }
 footer {
   border-top: 1px solid var(--line);
@@ -747,6 +861,35 @@ input[type="range"] {
   margin: 2px 0;
   color: var(--muted);
   font-size: 13px;
+}
+.demo-profile-card {
+  background: white;
+  border: 2px solid #ffb81c;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+.demo-profile-card strong {
+  display: block;
+  font: 400 26px Georgia;
+  margin-top: 3px;
+}
+.demo-profile-card p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 5px 0 0;
+}
+.card-relevance {
+  background: #e8f1f8;
+  border-radius: 6px;
+  color: #003d78 !important;
+  font-size: 11px !important;
+  margin: 14px 0 0;
+  padding: 8px 10px;
 }
 .evidence-grid {
   display: grid;
@@ -1280,6 +1423,9 @@ td {
   .persona-section {
     grid-template-columns: 1fr;
   }
+  .persona-preview {
+    grid-template-columns: 1fr;
+  }
   .topbar {
     padding: 0 12px;
   }
@@ -1369,6 +1515,20 @@ td {
   }
   .persona-list {
     grid-template-columns: 1fr;
+  }
+  .persona-preview dl,
+  .demo-profile-card,
+  .demo-profile-card dl {
+    grid-template-columns: 1fr;
+  }
+  .landing-demo-notice,
+  .demo-mode-bar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 12px 20px;
+  }
+  .demo-mode-actions {
+    flex-wrap: wrap;
   }
   footer {
     padding: 20px;

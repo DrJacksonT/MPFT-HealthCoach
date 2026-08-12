@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { CoachApp } from "@/src/ui/CoachApp";
 
 const key = "evidence-coach-demo-v1";
@@ -24,14 +30,35 @@ afterEach(() => {
 describe("local demo data lifecycle", () => {
   it("deletes the stored key and can persist a later manual review", async () => {
     render(<CoachApp evidence={[]} />);
-    fireEvent.click(await screen.findByRole("button", { name: /Family focus/i }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Family focus/i }),
+    );
+    expect(screen.getByText("SELECTED FICTIONAL DEMO")).not.toBeNull();
+    expect(screen.queryByText("Fictional demo evidence")).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Open the Family focus demo/i }),
+    );
+    expect(
+      screen.getByLabelText("Active fictional demo").textContent,
+    ).toContain("Family focus");
     await waitFor(() => expect(localStorage.getItem(key)).not.toBeNull());
+    expect(JSON.parse(localStorage.getItem(key) ?? "{}").personaName).toBe(
+      "Family focus",
+    );
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete my demo data" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Delete my demo data" }),
+    );
     await waitFor(() => expect(localStorage.getItem(key)).toBeNull());
 
-    fireEvent.click(screen.getByRole("button", { name: /Start my smoking review/i }));
-    fireEvent.click(screen.getByRole("button", { name: /See evidence that may be relevant/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Start my smoking review/i }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /See evidence that may be relevant/i,
+      }),
+    );
     await waitFor(() => expect(localStorage.getItem(key)).not.toBeNull());
   });
 });
