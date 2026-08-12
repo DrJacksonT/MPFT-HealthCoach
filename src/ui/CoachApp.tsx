@@ -1454,7 +1454,10 @@ function PageHead({
 function Footer() {
   return (
     <footer>
-      <span>Evidence Coach: smoking prototype</span>
+      <span>
+        Research tool created by Dr Theo Jackson and the Public Health Team at
+        MPFT.
+      </span>
       <span>
         Research prototype only. Not monitored. Not a clinical service.
       </span>

@@ -416,7 +416,18 @@ a {
   grid-template-columns: 1fr 1fr;
   gap: 7px 28px;
   color: var(--muted);
-  padding-left: 20px;
+  list-style: disc;
+  margin: 0;
+  padding-left: 22px;
+}
+.can-grid li {
+  padding-left: 2px;
+}
+.can li::marker {
+  color: var(--teal);
+}
+.cannot li::marker {
+  color: #9b4d2b;
 }
 .persona-section {
   margin-top: 80px;
