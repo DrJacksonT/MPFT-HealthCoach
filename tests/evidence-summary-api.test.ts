@@ -61,6 +61,7 @@ describe("personalised evidence summary API", () => {
     ];
     const response = await POST(request({ evidenceIds: ids, context: copdContext }));
     const body = (await response.json()) as {
+      generatedBy: string;
       quantified_facts: {
         evidence_id: string;
         metric: "absoluteEffect" | "relativeEffect" | "effectValue";
@@ -68,6 +69,7 @@ describe("personalised evidence summary API", () => {
       }[];
     };
     expect(response.status).toBe(200);
+    expect(body.generatedBy).toBe("reviewed-template");
     expect(body.quantified_facts).toHaveLength(2);
     expect(body.quantified_facts.map((fact) => fact.kind)).toEqual([
       "risk",
