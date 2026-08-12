@@ -1,0 +1,1463 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  Activity,
+  ArrowRight,
+  BarChart3,
+  BookOpen,
+  Check,
+  ChevronDown,
+  CircleAlert,
+  ClipboardList,
+  Coins,
+  ExternalLink,
+  HeartHandshake,
+  Info,
+  LockKeyhole,
+  MessageCircle,
+  RotateCcw,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  Trash2,
+} from "lucide-react";
+import type {
+  Assessment,
+  CheckIn,
+  DemoState,
+  EvidenceRecord,
+  Goal,
+} from "@/src/domain/types";
+import {
+  calculateDailyCost,
+  calculatePackYears,
+  calculateProgress,
+  smokingModule,
+} from "@/src/modules/smoking";
+import { demoStateSchema } from "@/src/domain/state-schema";
+
+interface CoachCitation {
+  id: string;
+  title: string;
+  organisation: string;
+  publicationYear: number;
+  url: string;
+}
+interface CoachClaim {
+  text: string;
+  evidence_ids: string[];
+  certainty: string;
+}
+interface CoachReply {
+  kind: string;
+  summary?: string;
+  why_relevant?: string;
+  claims?: CoachClaim[];
+  limitations?: string[];
+  coaching_question?: string;
+  message?: string;
+  citations?: CoachCitation[];
+}
+
+const STORAGE_KEY = "evidence-coach-demo-v1";
+const empty: DemoState = { version: 1, synthetic: true, checkIns: [] };
+const baseAssessment: Assessment = {
+  ageBand: "45-59",
+  cigarettesPerDay: 10,
+  yearsSmoked: 15,
+  firstCigarette: "31-60",
+  previousAttempts: "1",
+  longestQuit: "weeks",
+  methodsTried: [],
+  vaping: "no",
+  motivations: ["health"],
+  importance: 7,
+  confidence: 5,
+  conditions: ["none"],
+  intention: "quit",
+};
+const personas: Record<string, Assessment> = {
+  "Family focus": {
+    ...baseAssessment,
+    ageBand: "45-59",
+    cigarettesPerDay: 20,
+    yearsSmoked: 25,
+    firstCigarette: "6-30",
+    previousAttempts: "2-3",
+    motivations: ["family", "health"],
+    importance: 9,
+    confidence: 6,
+    conditions: ["hypertension"],
+    intention: "quit",
+    packPrice: 15,
+  },
+  "Breathing support": {
+    ...baseAssessment,
+    ageBand: "60-65",
+    cigarettesPerDay: 15,
+    yearsSmoked: 40,
+    firstCigarette: "within-5",
+    previousAttempts: "4+",
+    motivations: ["breathing", "independence"],
+    importance: 8,
+    confidence: 3,
+    conditions: ["copd"],
+    intention: "reduce",
+    packPrice: 14.5,
+  },
+  "Money & fitness": {
+    ...baseAssessment,
+    ageBand: "30-44",
+    cigarettesPerDay: 8,
+    yearsSmoked: 12,
+    firstCigarette: "after-60",
+    previousAttempts: "none",
+    longestQuit: "not-applicable",
+    motivations: ["money", "fitness"],
+    importance: 7,
+    confidence: 7,
+    conditions: ["none"],
+    intention: "learn",
+    packPrice: 16,
+  },
+  "Is it too late?": {
+    ...baseAssessment,
+    ageBand: "45-59",
+    cigarettesPerDay: 18,
+    yearsSmoked: 32,
+    firstCigarette: "6-30",
+    previousAttempts: "2-3",
+    motivations: ["health", "family"],
+    importance: 6,
+    confidence: 4,
+    conditions: ["diabetes", "cardiovascular"],
+    intention: "learn",
+    packPrice: 15.5,
+  },
+};
+type View =
+  "landing" | "review" | "evidence" | "plan" | "progress" | "coach" | "help";
+
+export function CoachApp({
+  evidence,
+  showDeveloperLinks = false,
+}: {
+  evidence: EvidenceRecord[];
+  showDeveloperLinks?: boolean;
+}) {
+  const [state, setState] = useState<DemoState>(empty);
+  const [view, setView] = useState<View>("landing");
+  const [hydrated, setHydrated] = useState(false);
+  /* localStorage is an external browser store. Hydration intentionally restores it once. */
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = demoStateSchema.safeParse(JSON.parse(saved));
+        const tooOld =
+          parsed.success &&
+          parsed.data.savedAt &&
+          Date.now() - new Date(parsed.data.savedAt).getTime() >
+            30 * 24 * 60 * 60 * 1000;
+        if (parsed.success && !tooOld) {
+          setState(parsed.data);
+          setView(parsed.data.assessment ? "evidence" : "landing");
+        } else localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // Storage may be disabled. Continue with empty in-memory state.
+      }
+    }
+    setHydrated(true);
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      if (!state.assessment && !state.goal && state.checkIns.length === 0)
+        localStorage.removeItem(STORAGE_KEY);
+      else
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ ...state, savedAt: new Date().toISOString() }),
+        );
+    } catch {
+      // Storage can be unavailable or full. The in-memory prototype still works.
+    }
+  }, [state, hydrated]);
+  const assessment = state.assessment;
+  const ranked = useMemo(() => {
+    const tags = assessment ? smokingModule.evidenceTags(assessment) : [];
+    return [...evidence]
+      .map((item) => ({
+        item,
+        score: item.applicabilityTags.reduce(
+          (n, tag) => n + (tags.includes(tag) ? 2 : tag === "overall" ? 1 : 0),
+          0,
+        ),
+      }))
+      .sort(
+        (a, b) =>
+          b.score - a.score || b.item.publicationYear - a.item.publicationYear,
+      )
+      .slice(0, 6)
+      .map((x) => x.item);
+  }, [evidence, assessment]);
+  function loadPersona(name: string) {
+    setState({ ...empty, synthetic: true, assessment: personas[name] });
+    setView("evidence");
+  }
+  function deleteData() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // The in-memory state is still cleared if browser storage is unavailable.
+    }
+    setState(empty);
+    setView("landing");
+  }
+  if (!hydrated) return <Landing onStart={() => {}} onPersona={() => {}} />;
+  if (view === "landing")
+    return (
+      <Landing onStart={() => setView("review")} onPersona={loadPersona} />
+    );
+  return (
+    <div className="app-shell">
+      <PrototypeBanner />
+      <TopBar
+        view={view}
+        setView={setView}
+        hasAssessment={Boolean(assessment)}
+        onDelete={deleteData}
+      />
+      <main id="main-content" className="main-content">
+        {view === "review" && (
+          <Review
+            initial={assessment ?? baseAssessment}
+            onComplete={(value) => {
+              setState((s) => ({ ...s, synthetic: false, assessment: value }));
+              setView("evidence");
+            }}
+          />
+        )}
+        {view === "evidence" && assessment && (
+          <EvidencePage
+            assessment={assessment}
+            records={ranked}
+            onPlan={() => setView("plan")}
+          />
+        )}
+        {view === "plan" && assessment && (
+          <Plan
+            assessment={assessment}
+            goal={state.goal}
+            onGoal={(goal) => setState((s) => ({ ...s, goal }))}
+          />
+        )}
+        {view === "progress" && assessment && (
+          <Progress
+            assessment={assessment}
+            goal={state.goal}
+            checkIns={state.checkIns}
+            onCheckIn={(c) =>
+              setState((s) => ({ ...s, checkIns: [...s.checkIns, c] }))
+            }
+          />
+        )}
+        {view === "coach" && assessment && (
+          <Coach assessment={assessment} records={ranked} />
+        )}
+        {view === "help" && (
+          <Help onDelete={deleteData} showDeveloperLinks={showDeveloperLinks} />
+        )}
+        {!assessment && view !== "review" && (
+          <EmptyReview onStart={() => setView("review")} />
+        )}
+      </main>
+    </div>
+  );
+}
+
+function PrototypeBanner() {
+  return (
+    <div className="prototype-banner">
+      <ShieldCheck size={16} aria-hidden />
+      This is a research prototype. It is not an MPFT clinical service. Nobody
+      monitors what you enter.
+    </div>
+  );
+}
+function Landing({
+  onStart,
+  onPersona,
+}: {
+  onStart: () => void;
+  onPersona: (name: string) => void;
+}) {
+  return (
+    <main id="main-content">
+      <PrototypeBanner />
+      <section className="hero">
+        <div className="hero-copy">
+          <div className="brand">
+            <img
+              src="/mpft-logo.png"
+              alt="Midlands Partnership University NHS Foundation Trust"
+            />
+            <span className="prototype-name">
+              Evidence Coach
+              <small>Smoking research prototype</small>
+            </span>
+          </div>
+          <p className="eyebrow">Understand your smoking</p>
+          <h1>
+            Understand the evidence.
+            <br />
+            Make a plan that works <em>for you.</em>
+          </h1>
+          <p className="lede">
+            This guided review shows which population evidence may matter to
+            you. It does not try to predict your exact future.
+          </p>
+          <div className="actions">
+            <button className="primary large" onClick={onStart}>
+              Start my smoking review <ArrowRight size={19} />
+            </button>
+            <a className="text-link" href="#capabilities">
+              See what this tool does <ChevronDown size={17} />
+            </a>
+          </div>
+          <div className="trust-row">
+            <span>
+              <LockKeyhole size={16} /> Demo data stays in this browser
+            </span>
+            <span>
+              <BookOpen size={16} /> Sources shown with every claim
+            </span>
+          </div>
+        </div>
+        <div className="evidence-preview" aria-label="Example evidence card">
+          <div className="preview-top">
+            <span className="topic-icon">
+              <Activity />
+            </span>
+            <span className="verified">
+              <Check size={13} /> VERIFIED EVIDENCE
+            </span>
+          </div>
+          <p className="preview-label">Relevant to your goals</p>
+          <h2>Support makes a difference</h2>
+          <p>
+            Behavioural support can increase quit rates. The strongest evidence
+            includes counselling.
+          </p>
+          <div className="certainty">
+            <span>Evidence confidence</span>
+            <strong>
+              <i /> High
+            </strong>
+          </div>
+          <div className="source">
+            <BookOpen size={17} />
+            <span>
+              <small>Source</small>Cochrane systematic review, 2021
+            </span>
+          </div>
+          <p className="precision">
+            <Info size={16} /> This is population evidence. It is not a personal
+            prediction.
+          </p>
+        </div>
+      </section>
+      <section className="capabilities" id="capabilities">
+        <div>
+          <p className="eyebrow">A guided programme, not a blank chatbot</p>
+          <h2>From understanding to a next step</h2>
+        </div>
+        <div className="journey" aria-label="Programme steps">
+          {[
+            [
+              ClipboardList,
+              "1",
+              "Review",
+              "Your smoking, priorities and confidence",
+            ],
+            [BookOpen, "2", "Understand", "Evidence selected for relevance"],
+            [Target, "3", "Plan", "A goal you choose"],
+            [BarChart3, "4", "Check in", "Progress without judgement"],
+          ].map(([Icon, n, t, d]) => (
+            <article key={String(t)}>
+              <span className="step">{String(n)}</span>
+              <Icon />
+              <h3>{String(t)}</h3>
+              <p>{String(d)}</p>
+            </article>
+          ))}
+        </div>
+        <div className="can-grid">
+          <article className="can">
+            <h3>
+              <Check /> What it can do
+            </h3>
+            <ul>
+              <li>Explain evidence in plain English</li>
+              <li>Help identify your own reasons</li>
+              <li>Support goals, cravings and setbacks</li>
+              <li>Link to trusted NHS information</li>
+            </ul>
+          </article>
+          <article className="cannot">
+            <h3>
+              <CircleAlert /> What it cannot do
+            </h3>
+            <ul>
+              <li>Diagnose or assess symptoms</li>
+              <li>Prescribe or select medicines</li>
+              <li>Contact a clinician or monitor you</li>
+              <li>Respond to an emergency</li>
+            </ul>
+          </article>
+        </div>
+        <div className="persona-section">
+          <div>
+            <span className="synthetic">PRESENTATION MODE</span>
+            <h2>Or load a synthetic demo</h2>
+            <p>
+              Choose from four fictional profiles. None contains real patient
+              information.
+            </p>
+          </div>
+          <div className="persona-list">
+            {Object.keys(personas).map((name, i) => (
+              <button key={name} onClick={() => onPersona(name)}>
+                <span>{String.fromCharCode(65 + i)}</span>
+                <strong>{name}</strong>
+                <small>
+                  {i === 0
+                    ? "In their 40s, with high blood pressure, motivated by family"
+                    : i === 1
+                      ? "In their 60s, with COPD, confidence 3 out of 10"
+                      : i === 2
+                        ? "In their 30s, motivated by money and fitness"
+                        : "In their 50s, with diabetes, unsure about quitting"}
+                </small>
+                <ArrowRight size={16} />
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+      <Footer />
+    </main>
+  );
+}
+
+function TopBar({
+  view,
+  setView,
+  hasAssessment,
+  onDelete,
+}: {
+  view: View;
+  setView: (v: View) => void;
+  hasAssessment: boolean;
+  onDelete: () => void;
+}) {
+  const items: [View, string, typeof Target][] = [
+    ["evidence", "Evidence", BookOpen],
+    ["plan", "My plan", Target],
+    ["progress", "Progress", BarChart3],
+    ["coach", "Ask coach", MessageCircle],
+    ["help", "Help & data", ShieldCheck],
+  ];
+  return (
+    <>
+      <header className="topbar">
+        <button className="logo-button" aria-label="Go to home" onClick={() => setView("landing")}>
+          <img src="/mpft-logo.png" alt="" />
+          <span className="top-product">
+            <strong>Evidence Coach</strong>
+            <small>Research prototype</small>
+          </span>
+        </button>
+        <nav aria-label="Main navigation">
+          {items.map(([id, label, Icon]) => (
+            <button
+              key={id}
+              className={view === id ? "active" : ""}
+              onClick={() =>
+                setView(hasAssessment || id === "help" ? id : "review")
+              }
+            >
+              <Icon size={17} />
+              {label}
+            </button>
+          ))}
+        </nav>
+        <button
+          className="delete-small"
+          aria-label="Delete my demo data"
+          onClick={onDelete}
+          title="Delete my demo data"
+        >
+          <Trash2 size={17} />
+          <span>Delete demo data</span>
+        </button>
+      </header>
+    </>
+  );
+}
+
+function Review({
+  initial,
+  onComplete,
+}: {
+  initial: Assessment;
+  onComplete: (a: Assessment) => void;
+}) {
+  const [form, setForm] = useState(initial);
+  const set = <K extends keyof Assessment>(key: K, value: Assessment[K]) =>
+    setForm((f) => ({ ...f, [key]: value }));
+  const toggle = (key: "motivations" | "conditions", value: string) =>
+    set(
+      key,
+      (form[key] as string[]).includes(value)
+        ? (form[key] as string[]).filter((x) => x !== value)
+        : ([...(form[key] as string[]), value] as never),
+    );
+  return (
+    <section className="content narrow">
+      <PageHead
+        eyebrow="Your smoking review"
+        title="A few structured questions"
+        text="Use broad categories only. Please do not enter real names, contact details or clinical history."
+      />
+      <form
+        className="form-card"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onComplete(form);
+        }}
+      >
+        <fieldset>
+          <legend>About your smoking</legend>
+          <div className="field-grid">
+            <label>
+              Age group
+              <select
+                value={form.ageBand}
+                onChange={(e) =>
+                  set("ageBand", e.target.value as Assessment["ageBand"])
+                }
+              >
+                {[
+                  ["18-29", "18 to 29"],
+                  ["30-44", "30 to 44"],
+                  ["45-59", "45 to 59"],
+                  ["60-65", "60 to 65"],
+                  ["66+", "66 or over"],
+                ].map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Cigarettes on a usual day
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={form.cigarettesPerDay}
+                onChange={(e) =>
+                  set("cigarettesPerDay", Number(e.target.value))
+                }
+              />
+            </label>
+            <label>
+              Approximate years smoked
+              <input
+                type="number"
+                min="0"
+                max="80"
+                value={form.yearsSmoked}
+                onChange={(e) => set("yearsSmoked", Number(e.target.value))}
+              />
+            </label>
+            <label>
+              First cigarette after waking
+              <select
+                value={form.firstCigarette}
+                onChange={(e) =>
+                  set(
+                    "firstCigarette",
+                    e.target.value as Assessment["firstCigarette"],
+                  )
+                }
+              >
+                <option value="within-5">Within 5 minutes</option>
+                <option value="6-30">6 to 30 minutes</option>
+                <option value="31-60">31 to 60 minutes</option>
+                <option value="after-60">After 60 minutes</option>
+              </select>
+            </label>
+            <label>
+              Previous quit attempts
+              <select
+                value={form.previousAttempts}
+                onChange={(e) =>
+                  set(
+                    "previousAttempts",
+                    e.target.value as Assessment["previousAttempts"],
+                  )
+                }
+              >
+                <option value="none">None</option>
+                <option value="1">One</option>
+                <option value="2-3">Two or three</option>
+                <option value="4+">Four or more</option>
+              </select>
+            </label>
+            <label>
+              Optional price for 20 cigarettes (£)
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.packPrice ?? ""}
+                onChange={(e) =>
+                  set(
+                    "packPrice",
+                    e.target.value ? Number(e.target.value) : undefined,
+                  )
+                }
+              />
+            </label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>What matters most?</legend>
+          <div className="chips">
+            {[
+              "health",
+              "money",
+              "family",
+              "fitness",
+              "breathing",
+              "mental-wellbeing",
+              "children",
+              "appearance",
+              "independence",
+            ].map((x) => (
+              <button
+                type="button"
+                aria-pressed={form.motivations.includes(x)}
+                key={x}
+                onClick={() => toggle("motivations", x)}
+              >
+                {x.replace("-", " ")}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Which evidence may be relevant?</legend>
+          <p className="hint">
+            These choices select information; they do not diagnose anything.
+          </p>
+          <div className="chips">
+            {[
+              ["diabetes", "Diabetes"],
+              ["cardiovascular", "Heart or circulation condition"],
+              ["copd", "COPD"],
+              ["asthma", "Asthma"],
+              ["hypertension", "High blood pressure"],
+              ["mental-wellbeing", "Depression or anxiety"],
+              ["none", "None of these"],
+              ["prefer-not-to-say", "Prefer not to say"],
+            ].map(([v, l]) => (
+              <button
+                type="button"
+                aria-pressed={form.conditions.includes(v as never)}
+                key={v}
+                onClick={() => toggle("conditions", v)}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Your ratings</legend>
+          <div className="range-grid">
+            <label>
+              How important is making a change?{" "}
+              <strong>{form.importance}/10</strong>
+              <input
+                type="range"
+                min="0"
+                max="10"
+                value={form.importance}
+                onChange={(e) => set("importance", Number(e.target.value))}
+              />
+              <span>
+                <i>Not important</i>
+                <i>Very important</i>
+              </span>
+            </label>
+            <label>
+              How confident do you feel? <strong>{form.confidence}/10</strong>
+              <input
+                type="range"
+                min="0"
+                max="10"
+                value={form.confidence}
+                onChange={(e) => set("confidence", Number(e.target.value))}
+              />
+              <span>
+                <i>Not confident</i>
+                <i>Very confident</i>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>What feels right now?</legend>
+          <div className="choice-cards">
+            {[
+              ["quit", "I want to quit", "Build a stopping plan"],
+              ["reduce", "I want to cut down first", "Take a planned step"],
+              [
+                "learn",
+                "I’m not ready yet",
+                "Understand options without pressure",
+              ],
+            ].map(([v, t, d]) => (
+              <label key={v} className={form.intention === v ? "selected" : ""}>
+                <input
+                  type="radio"
+                  name="intention"
+                  checked={form.intention === v}
+                  onChange={() =>
+                    set("intention", v as Assessment["intention"])
+                  }
+                />
+                <strong>{t}</strong>
+                <span>{d}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <div className="review-summary">
+          <span>
+            <Activity /> Estimated pack years{" "}
+            <strong>
+              {calculatePackYears(form.cigarettesPerDay, form.yearsSmoked)}
+            </strong>
+          </span>
+          {calculateDailyCost(form.cigarettesPerDay, form.packPrice) !==
+            undefined && (
+            <span>
+              <Coins /> Estimated daily spend{" "}
+              <strong>
+                £
+                {calculateDailyCost(
+                  form.cigarettesPerDay,
+                  form.packPrice,
+                )?.toFixed(2)}
+              </strong>
+            </span>
+          )}
+          <small>
+            These estimates use the numbers you entered. They are not risk
+            predictions.
+          </small>
+        </div>
+        <button className="primary large" type="submit">
+          See evidence that may be relevant <ArrowRight size={18} />
+        </button>
+      </form>
+    </section>
+  );
+}
+
+function EvidencePage({
+  assessment,
+  records,
+  onPlan,
+}: {
+  assessment: Assessment;
+  records: EvidenceRecord[];
+  onPlan: () => void;
+}) {
+  const selected = [...assessment.motivations, ...assessment.conditions]
+    .filter((x) => x !== "none" && x !== "prefer-not-to-say")
+    .map((x) => x.replace("-", " "));
+  return (
+    <section className="content">
+      <PageHead
+        eyebrow="Your evidence review"
+        title="What quitting could mean for you"
+        text="We ranked reviewed population evidence using the broad categories you selected. It cannot predict exactly what will happen to you."
+      />
+      <div className="relevance-strip">
+        <Sparkles />
+        <div>
+          <strong>Why these cards?</strong>
+          <p>
+            {selected.length
+              ? `They relate to the areas you selected: ${selected.join(", ")}.`
+              : "They cover the main benefits and sources of support."}{" "}
+            Normal application code ranks these cards. No model calculates your
+            risk.
+          </p>
+        </div>
+      </div>
+      <div className="evidence-grid">
+        {records.map((item, i) => (
+          <EvidenceCard key={item.id} item={item} primary={i === 0} />
+        ))}
+      </div>
+      <div className="next-panel">
+        <div>
+          <p className="eyebrow">Evidence into action</p>
+          <h2>What would you like to do with this?</h2>
+          <p>A goal is an invitation, not a judgement.</p>
+        </div>
+        <button className="primary" onClick={onPlan}>
+          Choose a next step <ArrowRight size={18} />
+        </button>
+      </div>
+    </section>
+  );
+}
+function EvidenceCard({
+  item,
+  primary,
+}: {
+  item: EvidenceRecord;
+  primary?: boolean;
+}) {
+  return (
+    <article className={`evidence-card ${primary ? "featured" : ""}`}>
+      <div className="card-kicker">
+        <span>{item.applicabilityTags[0]?.replace("-", " ")}</span>
+        <span className="verified">
+          <Check size={12} /> VERIFIED
+        </span>
+      </div>
+      <h2>{item.patientFriendlySummary}</h2>
+      {item.absoluteEffect && (
+        <div className="number-box">
+          <strong>{item.absoluteEffect.split("(")[0]}</strong>
+          <span>
+            {item.comparator
+              ? `Compared with ${item.comparator.toLowerCase()}`
+              : "In the studied population"}
+          </span>
+        </div>
+      )}
+      <p>{item.mainFinding}</p>
+      <div className="certainty-row">
+        <span>How certain are we?</span>
+        <strong className={`certainty-${item.evidenceConfidence}`}>
+          <i />
+          {item.evidenceConfidence}
+        </strong>
+      </div>
+      <details>
+        <summary>
+          Tell me more <ChevronDown size={16} />
+        </summary>
+        <div className="details-body">
+          {item.effectValue && (
+            <dl>
+              <div>
+                <dt>Effect measure</dt>
+                <dd>
+                  {item.effectMeasure}: {item.effectValue}{" "}
+                  {item.confidenceInterval && `(${item.confidenceInterval})`}
+                </dd>
+              </div>
+              <div>
+                <dt>Population</dt>
+                <dd>
+                  {item.population}
+                  {item.sampleSize && `. ${item.sampleSize}`}
+                </dd>
+              </div>
+              <div>
+                <dt>Timeframe</dt>
+                <dd>{item.timeframe}</dd>
+              </div>
+            </dl>
+          )}
+          <h3>Limits and applicability</h3>
+          <ul>
+            {item.limitations.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </ul>
+          <p className="no-prediction">
+            <Info size={15} /> No. This does not predict exactly what will
+            happen to you.
+          </p>
+        </div>
+      </details>
+      <a className="citation" href={item.url} target="_blank" rel="noreferrer">
+        <BookOpen size={17} />
+        <span>
+          <small>
+            {item.sourceType.replace("-", " ")}, {item.publicationYear}
+          </small>
+          {item.organisation}: {item.title}
+        </span>
+        <ExternalLink size={15} />
+      </a>
+    </article>
+  );
+}
+
+function Plan({
+  assessment,
+  goal,
+  onGoal,
+}: {
+  assessment: Assessment;
+  goal?: Goal;
+  onGoal: (g: Goal) => void;
+}) {
+  const options = smokingModule.goals.filter((x) =>
+    x.intentions.includes(assessment.intention),
+  );
+  return (
+    <section className="content narrow">
+      <PageHead
+        eyebrow="Your plan"
+        title={goal ? "Your chosen next step" : "Choose a next step"}
+        text="You decide what is realistic. You can change it at any time."
+      />
+      {goal ? (
+        <div className="goal-active">
+          <span>
+            <Target />
+          </span>
+          <div>
+            <small>ACTIVE DEMO GOAL</small>
+            <h2>{goal.title}</h2>
+            <p>{goal.detail}</p>
+            <button
+              className="secondary"
+              onClick={() => onGoal({ ...goal, completed: !goal.completed })}
+            >
+              {goal.completed ? (
+                <>
+                  <RotateCcw size={16} /> Mark as active
+                </>
+              ) : (
+                <>
+                  <Check size={16} /> Mark complete
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="goal-list">
+          {options.map((x) => (
+            <button
+              key={x.kind}
+              onClick={() =>
+                onGoal({
+                  id: crypto.randomUUID(),
+                  kind: x.kind,
+                  title: x.title,
+                  detail: x.detail,
+                  createdAt: new Date().toISOString(),
+                  completed: false,
+                })
+              }
+            >
+              <span>
+                <Target size={19} />
+              </span>
+              <div>
+                <strong>{x.title}</strong>
+                <small>{x.detail}</small>
+              </div>
+              <ArrowRight size={17} />
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="support-note">
+        <HeartHandshake />
+        <div>
+          <strong>Support can sit alongside your plan</strong>
+          <p>
+            A pharmacist, GP or stop-smoking adviser can discuss general options
+            in light of your health and medicines. This prototype cannot select
+            treatment for you.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Progress({
+  assessment,
+  goal,
+  checkIns,
+  onCheckIn,
+}: {
+  assessment: Assessment;
+  goal?: Goal;
+  checkIns: CheckIn[];
+  onCheckIn: (c: CheckIn) => void;
+}) {
+  const [open, setOpen] = useState(checkIns.length === 0);
+  const [cigs, setCigs] = useState(assessment.cigarettesPerDay);
+  const [craving, setCraving] = useState(5);
+  const [confidence, setConfidence] = useState(assessment.confidence);
+  const [trigger, setTrigger] = useState("routine");
+  const progress = calculateProgress(
+    assessment.cigarettesPerDay,
+    checkIns,
+    assessment.packPrice,
+  );
+  const max = Math.max(
+    assessment.cigarettesPerDay,
+    ...checkIns.map((x) => x.cigarettes),
+    1,
+  );
+  return (
+    <section className="content">
+      <PageHead
+        eyebrow="Progress"
+        title="Notice patterns, not perfection"
+        text="A lapse does not erase progress. Missing days simply mean that no check-in was recorded. We do not treat them as smoking or as abstinence."
+      />
+      <div className="stats">
+        <article>
+          <small>CHECK-INS</small>
+          <strong>{checkIns.length}</strong>
+          <span>stored locally</span>
+        </article>
+        <article>
+          <small>EST. CIGARETTES AVOIDED</small>
+          <strong>{progress.avoided}</strong>
+          <span>against your starting number</span>
+        </article>
+        <article>
+          <small>EST. MONEY NOT SPENT</small>
+          <strong>
+            {progress.money === undefined
+              ? "Not available"
+              : `£${progress.money.toFixed(2)}`}
+          </strong>
+          <span>based on your pack price</span>
+        </article>
+        <article>
+          <small>GOAL</small>
+          <strong className="small-stat">
+            {goal?.completed ? "Completed" : goal ? "In progress" : "Not set"}
+          </strong>
+          <span>{goal?.title ?? "Choose one in My plan"}</span>
+        </article>
+      </div>
+      {checkIns.length > 0 && (
+        <div className="chart-card">
+          <h2>Cigarettes per check-in</h2>
+          <div
+            className="bars"
+            role="img"
+            aria-label={checkIns
+              .map((x) => `${x.date}: ${x.cigarettes} cigarettes`)
+              .join("; ")}
+          >
+            {checkIns.map((x) => (
+              <div key={x.id}>
+                <span
+                  style={{
+                    height: `${Math.max(4, (x.cigarettes / max) * 100)}%`,
+                  }}
+                />
+                <strong>{x.cigarettes}</strong>
+                <small>
+                  {new Date(x.date).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </small>
+              </div>
+            ))}
+          </div>
+          <table>
+            <caption>Accessible progress data</caption>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Cigarettes</th>
+                <th>Craving</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              {checkIns.map((x) => (
+                <tr key={x.id}>
+                  <td>{new Date(x.date).toLocaleDateString("en-GB")}</td>
+                  <td>{x.cigarettes}</td>
+                  <td>{x.craving}/10</td>
+                  <td>{x.confidence}/10</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <button className="primary" onClick={() => setOpen(!open)}>
+        {open ? "Close check-in" : "Add today’s check-in"}
+      </button>
+      {open && (
+        <form
+          className="checkin"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onCheckIn({
+              id: crypto.randomUUID(),
+              date: new Date().toISOString(),
+              cigarettes: cigs,
+              craving,
+              confidence,
+              goalAttempted: Boolean(goal),
+              trigger,
+              win: "",
+            });
+            setOpen(false);
+          }}
+        >
+          <h2>How did today go?</h2>
+          <div className="field-grid">
+            <label>
+              Cigarettes today
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={cigs}
+                onChange={(e) => setCigs(Number(e.target.value))}
+              />
+            </label>
+            <label>
+              Biggest trigger
+              <select
+                value={trigger}
+                onChange={(e) => setTrigger(e.target.value)}
+              >
+                <option>routine</option>
+                <option>craving</option>
+                <option>stress</option>
+                <option>social situation</option>
+                <option>alcohol</option>
+                <option>other / not sure</option>
+              </select>
+            </label>
+          </div>
+          <div className="range-grid">
+            <label>
+              Craving <strong>{craving}/10</strong>
+              <input
+                type="range"
+                min="0"
+                max="10"
+                value={craving}
+                onChange={(e) => setCraving(Number(e.target.value))}
+              />
+            </label>
+            <label>
+              Confidence <strong>{confidence}/10</strong>
+              <input
+                type="range"
+                min="0"
+                max="10"
+                value={confidence}
+                onChange={(e) => setConfidence(Number(e.target.value))}
+              />
+            </label>
+          </div>
+          {cigs > assessment.cigarettesPerDay && (
+            <p className="lapse">
+              <HeartHandshake /> One day does not erase your progress. Looking
+              at the trigger can help you plan the next response.
+            </p>
+          )}
+          <button className="primary" type="submit">
+            Save locally
+          </button>
+        </form>
+      )}
+    </section>
+  );
+}
+
+function Coach({
+  assessment,
+  records,
+}: {
+  assessment: Assessment;
+  records: EvidenceRecord[];
+}) {
+  const [message, setMessage] = useState("");
+  const [reply, setReply] = useState<CoachReply | null>(null);
+  const [busy, setBusy] = useState(false);
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setReply(null);
+    try {
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          message,
+          evidenceIds: records.map((x) => x.id),
+          context: {
+            intention: assessment.intention,
+            importance: assessment.importance,
+            confidence: assessment.confidence,
+          },
+        }),
+      });
+      setReply((await res.json()) as CoachReply);
+    } catch {
+      setReply({
+        kind: "error",
+        message:
+          "The coach is unavailable. Your guided programme and evidence cards still work.",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="content narrow">
+      <PageHead
+        eyebrow="Optional conversation"
+        title="Ask your smoking coach"
+        text="An automated, scoped coach for motivation and planning. It retrieves only eligible evidence from this prototype, never the live web."
+      />
+      <div className="coach-boundaries">
+        <div>
+          <Check />
+          <span>
+            <strong>I can help with</strong> motivation, cravings, plans,
+            setbacks and general evidence
+          </span>
+        </div>
+        <div>
+          <CircleAlert />
+          <span>
+            <strong>I cannot help with</strong> symptoms, diagnosis,
+            emergencies, prescribing or personal medicine choice
+          </span>
+        </div>
+      </div>
+      <div className="coach-thread" aria-live="polite">
+        {reply && (
+          <div className={`reply ${reply.kind}`}>
+            <span className="coach-avatar">
+              <Sparkles />
+            </span>
+            <div>
+              {reply.summary && (
+                <>
+                  <h2>{reply.summary}</h2>
+                  <p>{reply.why_relevant}</p>
+                  {reply.claims?.map((c, i) => (
+                    <p key={i}>
+                      {c.text} <small>[{c.evidence_ids.join(", ")}]</small>
+                    </p>
+                  ))}
+                  {reply.limitations && reply.limitations.length > 0 && (
+                    <ul>
+                      {reply.limitations.map((x) => (
+                        <li key={x}>{x}</li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="question">{reply.coaching_question}</p>
+                </>
+              )}
+              {reply.message && <p>{reply.message}</p>}
+              {reply.citations && reply.citations.length > 0 && (
+                <div className="mini-citations">
+                  {reply.citations.map((c) => (
+                    <a key={c.id} href={c.url} target="_blank" rel="noreferrer">
+                      {c.organisation}, {c.publicationYear}{" "}
+                      <ExternalLink size={12} />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      <form className="coach-form" onSubmit={submit}>
+        <label htmlFor="coach-message">Your question or thought</label>
+        <textarea
+          id="coach-message"
+          maxLength={800}
+          required
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="For example: I keep smoking when work gets stressful. What could I plan?"
+        />
+        <div>
+          <small>
+            Please do not enter names, contact details or real clinical history.
+          </small>
+          <button className="primary" disabled={busy}>
+            {busy ? "Preparing a grounded reply…" : "Ask the coach"}
+          </button>
+        </div>
+      </form>
+      <div className="prompt-suggestions">
+        {[
+          "Help me plan for a craving",
+          "I had one cigarette. Have I failed?",
+          "Why might support help?",
+        ].map((x) => (
+          <button key={x} onClick={() => setMessage(x)}>
+            {x}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Help({
+  onDelete,
+  showDeveloperLinks,
+}: {
+  onDelete: () => void;
+  showDeveloperLinks: boolean;
+}) {
+  return (
+    <section className="content narrow">
+      <PageHead
+        eyebrow="Help, safety & data"
+        title="Know the boundaries"
+        text="This prototype is not monitored and cannot contact anyone for you."
+      />
+      <div className="urgent">
+        <CircleAlert />
+        <div>
+          <h2>Need urgent help?</h2>
+          <p>
+            If someone is seriously ill or in immediate danger, call{" "}
+            <strong>999</strong>. For urgent medical advice that is not an
+            emergency, use <strong>NHS 111</strong>. This tool cannot assess
+            symptoms.
+          </p>
+        </div>
+      </div>
+      <div className="help-grid">
+        <article>
+          <LockKeyhole />
+          <h2>Your demo data</h2>
+          <p>
+            Your structured review, goals and check-ins are stored in this
+            browser’s local storage. Evidence is application data. If the
+            optional AI coach is configured, your message plus a small
+            structured context is sent from the server to OpenAI with{" "}
+            <code>store: false</code>. This setting is not a full zero data
+            retention guarantee.
+          </p>
+          <button className="danger" onClick={onDelete}>
+            <Trash2 size={17} /> Delete my demo data
+          </button>
+        </article>
+        <article>
+          <ShieldCheck />
+          <h2>Prototype status</h2>
+          <p>
+            Research and development prototype only. Not an MPFT clinical
+            service, not endorsed clinical software, not a diagnosis tool and
+            not a replacement for a clinician, pharmacist or stop smoking
+            adviser.
+          </p>
+        </article>
+      </div>
+      <h2>Trusted routes</h2>
+      <div className="resource-list">
+        {smokingModule.resources.map((r) => (
+          <a key={r.url} href={r.url} target="_blank" rel="noreferrer">
+            <span>
+              <strong>{r.title}</strong>
+              <small>{r.description}</small>
+            </span>
+            <ExternalLink />
+          </a>
+        ))}
+      </div>
+      {showDeveloperLinks && <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <a className="secondary inline" href="/admin/evidence">
+          Evidence dashboard <ArrowRight size={16} />
+        </a>
+        <a className="secondary inline" href="/admin/telemetry">
+          Development telemetry <ArrowRight size={16} />
+        </a>
+      </div>}
+    </section>
+  );
+}
+function EmptyReview({ onStart }: { onStart: () => void }) {
+  return (
+    <section className="content narrow">
+      <div className="empty">
+        <ClipboardList />
+        <h1>Complete your smoking review first</h1>
+        <p>The programme uses structured answers to rank relevant evidence.</p>
+        <button className="primary" onClick={onStart}>
+          Start review
+        </button>
+      </div>
+    </section>
+  );
+}
+function PageHead({
+  eyebrow,
+  title,
+  text,
+}: {
+  eyebrow: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <header className="page-head">
+      <p className="eyebrow">{eyebrow}</p>
+      <h1>{title}</h1>
+      <p>{text}</p>
+    </header>
+  );
+}
+function Footer() {
+  return (
+    <footer>
+      <span>Evidence Coach: smoking prototype</span>
+      <span>
+        Research prototype only. Not monitored. Not a clinical service.
+      </span>
+    </footer>
+  );
+}
