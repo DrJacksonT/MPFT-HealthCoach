@@ -61,4 +61,44 @@ describe("local demo data lifecycle", () => {
     );
     await waitFor(() => expect(localStorage.getItem(key)).not.toBeNull());
   });
+
+  it("turns a goal choice into a specific, editable plan", async () => {
+    render(<CoachApp evidence={[]} />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Family focus/i }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Open the Family focus demo/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /My plan/i }));
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Plan for one trigger/i }),
+    );
+    expect(
+      screen.getByRole("button", { name: /Back to goal choices/i }),
+    ).not.toBeNull();
+
+    fireEvent.change(
+      screen.getByLabelText(/A situation that triggers me to smoke/i),
+      { target: { value: "After dinner" } },
+    );
+    fireEvent.change(screen.getByLabelText(/What I will try instead/i), {
+      target: { value: "Walk around the block" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Save and activate this step/i }),
+    );
+
+    expect(screen.getByText("After dinner")).not.toBeNull();
+    expect(screen.getByText("Walk around the block")).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: /Choose a different step/i }),
+    ).not.toBeNull();
+    await waitFor(() =>
+      expect(
+        JSON.parse(localStorage.getItem(key) ?? "{}").goal.plan.trigger,
+      ).toBe("After dinner"),
+    );
+  });
 });

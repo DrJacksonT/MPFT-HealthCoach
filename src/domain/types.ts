@@ -82,6 +82,16 @@ export interface Goal {
   detail: string;
   createdAt: string;
   completed: boolean;
+  plan?: {
+    targetDate?: string;
+    supportPlan?: string;
+    trigger?: string;
+    response?: string;
+    delayUntil?: string;
+    smokeFreeSituation?: string;
+    supportRoute?: string;
+    learningFocus?: string;
+  };
 }
 
 export interface CheckIn {

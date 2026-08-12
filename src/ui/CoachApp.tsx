@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
+  ArrowLeft,
   ArrowRight,
   BarChart3,
   BookOpen,
@@ -329,6 +330,7 @@ export function CoachApp({
             assessment={assessment}
             goal={state.goal}
             onGoal={(goal) => setState((s) => ({ ...s, goal }))}
+            onBack={() => setView("evidence")}
           />
         )}
         {view === "progress" && assessment && (
@@ -1145,61 +1147,101 @@ function Plan({
   assessment,
   goal,
   onGoal,
+  onBack,
 }: {
   assessment: Assessment;
   goal?: Goal;
-  onGoal: (g: Goal) => void;
+  onGoal: (g: Goal | undefined) => void;
+  onBack: () => void;
 }) {
+  const [selectedKind, setSelectedKind] = useState<string | null>(null);
+  const [choosing, setChoosing] = useState(!goal);
   const options = smokingModule.goals.filter((x) =>
     x.intentions.includes(assessment.intention),
   );
+  const selected = smokingModule.goals.find((x) => x.kind === selectedKind);
+
+  if (selected) {
+    return (
+      <GoalSetup
+        option={selected}
+        existing={goal?.kind === selected.kind ? goal : undefined}
+        onBack={() => setSelectedKind(null)}
+        onSave={(nextGoal) => {
+          onGoal(nextGoal);
+          setSelectedKind(null);
+          setChoosing(false);
+        }}
+      />
+    );
+  }
+
   return (
     <section className="content narrow">
+      <button
+        type="button"
+        className="back-link"
+        onClick={choosing && goal ? () => setChoosing(false) : onBack}
+      >
+        <ArrowLeft size={17} /> {choosing && goal ? "Back to my plan" : "Back to evidence"}
+      </button>
       <PageHead
         eyebrow="Your plan"
-        title={goal ? "Your chosen next step" : "Choose a next step"}
+        title={goal && !choosing ? "Your chosen next step" : "Choose a next step"}
         text="You decide what is realistic. You can change it at any time."
       />
-      {goal ? (
+      {goal && !choosing ? (
         <div className="goal-active">
           <span>
             <Target />
           </span>
           <div>
-            <small>ACTIVE DEMO GOAL</small>
+            <small>
+              {goal.completed ? "COMPLETED DEMO GOAL" : "ACTIVE DEMO GOAL"}
+            </small>
             <h2>{goal.title}</h2>
             <p>{goal.detail}</p>
-            <button
-              className="secondary"
-              onClick={() => onGoal({ ...goal, completed: !goal.completed })}
-            >
-              {goal.completed ? (
-                <>
-                  <RotateCcw size={16} /> Mark as active
-                </>
-              ) : (
-                <>
-                  <Check size={16} /> Mark complete
-                </>
-              )}
-            </button>
+            <GoalDetails goal={goal} />
+            <div className="goal-actions">
+              <button
+                type="button"
+                className="primary"
+                onClick={() => onGoal({ ...goal, completed: !goal.completed })}
+              >
+                {goal.completed ? (
+                  <>
+                    <RotateCcw size={16} /> Mark as active
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} /> Mark complete
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setSelectedKind(goal.kind)}
+              >
+                Edit this plan
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setChoosing(true)}
+              >
+                Choose a different step
+              </button>
+            </div>
           </div>
         </div>
       ) : (
         <div className="goal-list">
           {options.map((x) => (
             <button
+              type="button"
               key={x.kind}
-              onClick={() =>
-                onGoal({
-                  id: crypto.randomUUID(),
-                  kind: x.kind,
-                  title: x.title,
-                  detail: x.detail,
-                  createdAt: new Date().toISOString(),
-                  completed: false,
-                })
-              }
+              onClick={() => setSelectedKind(x.kind)}
             >
               <span>
                 <Target size={19} />
@@ -1225,6 +1267,214 @@ function Plan({
         </div>
       </div>
     </section>
+  );
+}
+
+type GoalOption = (typeof smokingModule.goals)[number];
+type GoalPlan = NonNullable<Goal["plan"]>;
+
+function GoalSetup({
+  option,
+  existing,
+  onBack,
+  onSave,
+}: {
+  option: GoalOption;
+  existing?: Goal;
+  onBack: () => void;
+  onSave: (goal: Goal) => void;
+}) {
+  const [plan, setPlan] = useState<GoalPlan>(existing?.plan ?? {});
+  const set = (key: keyof GoalPlan, value: string) =>
+    setPlan((current) => ({ ...current, [key]: value }));
+  const isComplete =
+    option.kind === "quit-date"
+      ? Boolean(plan.targetDate)
+      : option.kind === "craving-plan"
+        ? Boolean(plan.trigger?.trim() && plan.response?.trim())
+        : option.kind === "delay-first"
+          ? Boolean(plan.delayUntil)
+          : option.kind === "smoke-free-space"
+            ? Boolean(plan.smokeFreeSituation?.trim())
+            : option.kind === "support"
+              ? Boolean(plan.supportRoute)
+              : Boolean(plan.learningFocus);
+
+  return (
+    <section className="content narrow">
+      <button type="button" className="back-link" onClick={onBack}>
+        <ArrowLeft size={17} /> Back to goal choices
+      </button>
+      <PageHead
+        eyebrow="Set up your next step"
+        title={option.title}
+        text={option.detail}
+      />
+      <form
+        className="form-card goal-setup"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!isComplete) return;
+          onSave({
+            id: existing?.id ?? crypto.randomUUID(),
+            kind: option.kind,
+            title: option.title,
+            detail: option.detail,
+            createdAt: existing?.createdAt ?? new Date().toISOString(),
+            completed: existing?.completed ?? false,
+            plan,
+          });
+        }}
+      >
+        <fieldset>
+          <legend>Make the step specific</legend>
+          {option.kind === "quit-date" && (
+            <div className="field-grid">
+              <label>
+                My quit date
+                <input
+                  type="date"
+                  required
+                  min={new Date().toISOString().slice(0, 10)}
+                  value={plan.targetDate ?? ""}
+                  onChange={(event) => set("targetDate", event.target.value)}
+                />
+              </label>
+              <label>
+                Support I want around that date (optional)
+                <input
+                  maxLength={200}
+                  value={plan.supportPlan ?? ""}
+                  placeholder="For example, speak to a pharmacist"
+                  onChange={(event) => set("supportPlan", event.target.value)}
+                />
+              </label>
+            </div>
+          )}
+          {option.kind === "craving-plan" && (
+            <div className="field-grid">
+              <label>
+                A situation that triggers me to smoke
+                <input
+                  required
+                  maxLength={100}
+                  value={plan.trigger ?? ""}
+                  placeholder="For example, after dinner"
+                  onChange={(event) => set("trigger", event.target.value)}
+                />
+              </label>
+              <label>
+                What I will try instead
+                <input
+                  required
+                  maxLength={200}
+                  value={plan.response ?? ""}
+                  placeholder="For example, take a five-minute walk"
+                  onChange={(event) => set("response", event.target.value)}
+                />
+              </label>
+            </div>
+          )}
+          {option.kind === "delay-first" && (
+            <label>
+              I will wait until
+              <input
+                type="time"
+                required
+                value={plan.delayUntil ?? ""}
+                onChange={(event) => set("delayUntil", event.target.value)}
+              />
+            </label>
+          )}
+          {option.kind === "smoke-free-space" && (
+            <label>
+              The place or routine I will make smoke-free
+              <input
+                required
+                maxLength={150}
+                value={plan.smokeFreeSituation ?? ""}
+                placeholder="For example, in the car"
+                onChange={(event) =>
+                  set("smokeFreeSituation", event.target.value)
+                }
+              />
+            </label>
+          )}
+          {option.kind === "support" && (
+            <label>
+              Who I will contact first
+              <select
+                required
+                value={plan.supportRoute ?? ""}
+                onChange={(event) => set("supportRoute", event.target.value)}
+              >
+                <option value="">Choose an option</option>
+                <option>Local NHS stop smoking service</option>
+                <option>Pharmacist</option>
+                <option>GP practice</option>
+                <option>NHS quit smoking information</option>
+              </select>
+            </label>
+          )}
+          {option.kind === "learn-options" && (
+            <label>
+              What I want to understand first
+              <select
+                required
+                value={plan.learningFocus ?? ""}
+                onChange={(event) => set("learningFocus", event.target.value)}
+              >
+                <option value="">Choose a topic</option>
+                <option>Nicotine replacement options</option>
+                <option>Stop-smoking medicines</option>
+                <option>Behavioural support</option>
+                <option>Quitting in one go or cutting down</option>
+              </select>
+            </label>
+          )}
+        </fieldset>
+        <p className="goal-privacy-note">
+          Keep this general. Do not enter names, contact details or medical
+          information.
+        </p>
+        <div className="goal-form-actions">
+          <button type="submit" className="primary" disabled={!isComplete}>
+            {existing ? "Save changes" : "Save and activate this step"}
+            <ArrowRight size={17} />
+          </button>
+          <button type="button" className="secondary" onClick={onBack}>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+function GoalDetails({ goal }: { goal: Goal }) {
+  const plan = goal.plan;
+  if (!plan) return null;
+  const rows: [string, string | undefined][] = [
+    ["Quit date", plan.targetDate],
+    ["Support around that date", plan.supportPlan],
+    ["My trigger", plan.trigger],
+    ["What I will try", plan.response],
+    ["Wait until", plan.delayUntil],
+    ["Smoke-free place or routine", plan.smokeFreeSituation],
+    ["Contact first", plan.supportRoute],
+    ["Learn about", plan.learningFocus],
+  ];
+  const visible = rows.filter((row): row is [string, string] => Boolean(row[1]));
+  if (visible.length === 0) return null;
+  return (
+    <dl className="goal-details">
+      {visible.map(([label, value]) => (
+        <div key={label}>
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 

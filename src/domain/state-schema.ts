@@ -43,6 +43,18 @@ const goalSchema = z.object({
   detail: z.string().max(500),
   createdAt: z.string(),
   completed: z.boolean(),
+  plan: z
+    .object({
+      targetDate: z.string().max(20).optional(),
+      supportPlan: z.string().max(200).optional(),
+      trigger: z.string().max(100).optional(),
+      response: z.string().max(200).optional(),
+      delayUntil: z.string().max(20).optional(),
+      smokeFreeSituation: z.string().max(150).optional(),
+      supportRoute: z.string().max(100).optional(),
+      learningFocus: z.string().max(100).optional(),
+    })
+    .optional(),
 });
 
 const checkInSchema = z.object({
