@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/evidence-summary/route";
+import { evidenceRecords } from "@/src/data/evidence";
 
 const context = {
   ageBand: "45-59" as const,
@@ -37,13 +38,49 @@ describe("personalised evidence summary API", () => {
       kind: string;
       generatedBy: string;
       key_points: { evidence_ids: string[] }[];
+      quantified_facts: {
+        evidence_id: string;
+        metric: "absoluteEffect" | "relativeEffect" | "effectValue";
+        kind: "risk" | "benefit";
+      }[];
       important_uncertainties: string[];
     };
     expect(response.status).toBe(200);
     expect(body.kind).toBe("evidence-brief");
     expect(body.generatedBy).toBe("reviewed-template");
     expect(body.key_points[0].evidence_ids).toEqual(["nice-ng209-options"]);
+    expect(body.quantified_facts).toHaveLength(0);
     expect(body.important_uncertainties.join(" ")).toMatch(/cannot|not provide/i);
+  });
+
+  it("returns quantified COPD facts whose displayed metric exists in the cited record", async () => {
+    const copdContext = { ...context, conditions: ["copd" as const] };
+    const ids = [
+      "lung-health-study-copd-lung-function",
+      "lung-health-study-copd-mortality",
+    ];
+    const response = await POST(request({ evidenceIds: ids, context: copdContext }));
+    const body = (await response.json()) as {
+      quantified_facts: {
+        evidence_id: string;
+        metric: "absoluteEffect" | "relativeEffect" | "effectValue";
+        kind: "risk" | "benefit";
+      }[];
+    };
+    expect(response.status).toBe(200);
+    expect(body.quantified_facts).toHaveLength(2);
+    expect(body.quantified_facts.map((fact) => fact.kind)).toEqual([
+      "risk",
+      "benefit",
+    ]);
+    for (const fact of body.quantified_facts) {
+      expect(ids).toContain(fact.evidence_id);
+      expect(
+        evidenceRecords.find((item) => item.id === fact.evidence_id)?.[
+          fact.metric
+        ],
+      ).toBeTruthy();
+    }
   });
 
   it("fails closed when no eligible evidence is selected", async () => {

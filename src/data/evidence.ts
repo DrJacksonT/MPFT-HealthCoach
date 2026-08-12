@@ -170,6 +170,112 @@ export const evidenceRecords: readonly EvidenceRecord[] = Object.freeze([
       "Directly matched on 12 August 2026 to NICE NG115 recommendations on prognosis and routine COPD review factors.",
   }),
   verifiedRecord({
+    id: "lung-health-study-copd-lung-function",
+    title:
+      "Smoking cessation and lung function in mild-to-moderate chronic obstructive pulmonary disease: The Lung Health Study",
+    authors: [
+      "Scanlon PD",
+      "Connett JE",
+      "Waller LA",
+      "Altose MD",
+      "Bailey WC",
+      "Buist AS",
+      "Tashkin DP",
+    ],
+    organisation: "American Journal of Respiratory and Critical Care Medicine",
+    publicationYear: 2000,
+    publicationDate: "2000-02-01",
+    url: "https://pubmed.ncbi.nlm.nih.gov/10673175/",
+    doi: "10.1164/ajrccm.161.2.9901044",
+    sourceType: "randomised-trial",
+    studyDesign:
+      "Prospective randomised smoking-cessation trial with outcomes compared by achieved smoking status",
+    population:
+      "Adults who smoked and had mild-to-moderate airway obstruction; mean age 48.5 years and 36% women",
+    sampleSize: "3,926 enrolled; 3,818 had analysable lung-function results",
+    interventionOrExposure: "Sustained smoking cessation",
+    comparator: "Continuing smoking",
+    outcome: "Change in forced expiratory volume in one second (FEV1)",
+    timeframe: "Measured annually for five years; decline compared after year one",
+    effectMeasure: "Mean annual FEV1 decline after the first year",
+    effectValue:
+      "31 ± 48 mL/year in sustained quitters versus 62 ± 55 mL/year in continuing smokers",
+    absoluteEffect:
+      "31 mL/year lost by sustained quitters versus 62 mL/year by continuing smokers",
+    relativeEffect:
+      "Sustained quitters lost lung function at about half the annual rate of continuing smokers",
+    impactDirection: "risk",
+    mainFinding:
+      "People who stopped had an average 47 mL (2%) improvement in FEV1 in the first year. After that, sustained quitters lost an average 31 mL per year compared with 62 mL per year among continuing smokers.",
+    patientFriendlySummary:
+      "For smokers with mild-to-moderate airway obstruction, stopping was linked to about half the yearly loss of lung function seen in people who kept smoking.",
+    applicabilityTags: ["copd", "health", "quit", "reduce", "overall"],
+    limitations: [
+      "The figures are group averages and do not predict one person's future lung-function result.",
+      "Participants had mild-to-moderate obstruction, so the estimate may not transfer to more severe COPD.",
+      "The trial randomised cessation programmes, but this comparison groups people by whether they actually sustained quitting.",
+      "The study measured lung function, not the chance of hospital admission in the next year.",
+    ],
+    riskOfBiasNotes:
+      "The achieved-cessation comparison is clinically relevant but is not itself a fully randomised comparison; people who sustained quitting may differ from continuing smokers.",
+    evidenceConfidence: "moderate",
+    verificationNotes:
+      "The displayed population, five-year timeframe, 47 mL first-year change, and 31 versus 62 mL annual decline were directly matched to the indexed abstract on 12 August 2026.",
+  }),
+  verifiedRecord({
+    id: "lung-health-study-copd-mortality",
+    title:
+      "The effects of a smoking cessation intervention on 14.5-year mortality: a randomized clinical trial",
+    authors: [
+      "Anthonisen NR",
+      "Skeans MA",
+      "Wise RA",
+      "Manfreda J",
+      "Kanner RE",
+      "Connett JE",
+    ],
+    organisation: "Annals of Internal Medicine",
+    publicationYear: 2005,
+    publicationDate: "2005-02-15",
+    url: "https://pubmed.ncbi.nlm.nih.gov/15710956/",
+    doi: "10.7326/0003-4819-142-4-200502150-00005",
+    sourceType: "randomised-trial",
+    studyDesign:
+      "Long-term follow-up of a randomised smoking-cessation intervention trial",
+    population:
+      "Adults who smoked and had asymptomatic airway obstruction in the Lung Health Study",
+    sampleSize: "5,887 participants",
+    interventionOrExposure:
+      "A ten-week smoking-cessation programme with ongoing maintenance support",
+    comparator: "Usual care",
+    outcome: "Death from any cause",
+    timeframe: "14.5 years of follow-up",
+    effectMeasure: "All-cause mortality rate",
+    effectValue:
+      "8.83 deaths per 1,000 person-years with the programme versus 10.38 with usual care",
+    absoluteEffect:
+      "8.83 versus 10.38 deaths per 1,000 person-years over 14.5 years",
+    relativeEffect:
+      "The mortality rate was about 15% lower in the cessation-programme group",
+    impactDirection: "benefit",
+    mainFinding:
+      "Over 14.5 years, the all-cause mortality rate was 8.83 deaths per 1,000 person-years in the cessation-programme group and 10.38 in usual care.",
+    patientFriendlySummary:
+      "Among smokers with early airway obstruction, assignment to an intensive stop-smoking programme was linked to a lower death rate over 14.5 years than usual care.",
+    applicabilityTags: ["copd", "health", "quit", "cessation-support", "overall"],
+    limitations: [
+      "This compares assignment to a cessation programme with usual care; not everyone in the programme stopped smoking.",
+      "It is a long-term group result, not an individual's personal life-expectancy estimate.",
+      "Participants had asymptomatic airway obstruction, which may not match someone with advanced or symptomatic COPD.",
+      "Deaths per person-year are a study rate and are not the same as one person's percentage chance of dying.",
+    ],
+    riskOfBiasNotes:
+      "Randomisation supports a causal programme effect, but the estimate is for offering the intervention rather than guaranteed sustained cessation.",
+    evidenceConfidence: "moderate",
+    verificationNotes:
+      "The randomised design, population, 14.5-year follow-up and 8.83 versus 10.38 per 1,000 person-year mortality rates were directly matched to the indexed study record and DOI on 12 August 2026.",
+  }),
+  verifiedRecord({
     id: "cochrane-combination-nrt-2023",
     title:
       "Different doses, durations and modes of delivery of nicotine replacement therapy for smoking cessation",

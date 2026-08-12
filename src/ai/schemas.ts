@@ -84,6 +84,24 @@ export const evidenceBriefRequestSchema = z.object({
 export const evidenceBriefOutputSchema = z.object({
   headline: z.string().max(180),
   overview: z.string().max(800),
+  quantified_facts: z
+    .array(
+      z.object({
+        evidence_id: z
+          .string()
+          .min(1)
+          .max(100)
+          .regex(/^[a-z0-9-]+$/),
+        metric: z.enum(["absoluteEffect", "relativeEffect", "effectValue"]),
+        kind: z.enum(["risk", "benefit"]),
+        title: z.string().max(120),
+        explanation: z.string().max(400),
+        why_it_matters: z.string().max(350),
+        caveat: z.string().max(300),
+        certainty: z.enum(["high", "moderate", "limited"]),
+      }),
+    )
+    .max(4),
   key_points: z
     .array(
       z.object({

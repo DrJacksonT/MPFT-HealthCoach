@@ -1012,6 +1012,79 @@ input[type="range"] {
   place-items: center;
   flex: none;
 }
+.impact-facts {
+  border-top: 1px solid #d6e5ef;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 0 36px 30px;
+}
+.impact-fact {
+  background: white;
+  border: 1px solid #c9dce9;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 61, 120, 0.07);
+  padding: 22px;
+}
+.impact-risk {
+  border-top: 4px solid #b94a48;
+}
+.impact-benefit {
+  border-top: 4px solid #23865b;
+}
+.impact-label-row {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.impact-label-row span {
+  color: #7d3030;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.impact-benefit .impact-label-row span {
+  color: #176540;
+}
+.impact-label-row strong {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.impact-metric {
+  color: var(--navy);
+  font: 400 27px/1.15 Georgia;
+  margin: 18px 0 12px;
+}
+.impact-fact h3 {
+  font: 400 22px/1.25 Georgia;
+  margin: 0 0 9px;
+}
+.impact-fact > p:not(.impact-metric) {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 8px 0;
+}
+.impact-relevance strong,
+.impact-population strong {
+  color: var(--text);
+}
+.impact-caveat {
+  align-items: flex-start;
+  background: #fff8e8;
+  border-radius: 8px;
+  display: flex;
+  gap: 7px;
+  padding: 9px 10px;
+}
+.impact-caveat svg {
+  color: #8a5a00;
+  flex: none;
+  margin-top: 1px;
+}
 .brief-points {
   border-top: 1px solid #d6e5ef;
   padding: 0 36px;
@@ -2147,6 +2220,10 @@ td {
   }
   .brief-points {
     padding: 0 20px;
+  }
+  .impact-facts {
+    grid-template-columns: 1fr;
+    padding: 0 20px 24px;
   }
   .point-heading {
     align-items: flex-start;

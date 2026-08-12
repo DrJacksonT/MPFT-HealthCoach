@@ -65,6 +65,16 @@ interface EvidenceBrief {
   generatedBy?: "ai" | "reviewed-template";
   headline?: string;
   overview?: string;
+  quantified_facts?: {
+    evidence_id: string;
+    metric: "absoluteEffect" | "relativeEffect" | "effectValue";
+    kind: "risk" | "benefit";
+    title: string;
+    explanation: string;
+    why_it_matters: string;
+    caveat: string;
+    certainty: "high" | "moderate" | "limited";
+  }[];
   key_points?: {
     title: string;
     explanation: string;
@@ -1294,6 +1304,7 @@ function EvidencePage({
         ? "Wants to cut down"
         : "Exploring options",
   ];
+  const hasCopd = assessment.conditions.includes("copd");
   return (
     <section className="content">
       <PageHead
@@ -1301,12 +1312,14 @@ function EvidencePage({
         title={
           synthetic
             ? `${personaName ?? "Fictional profile"} demo`
-            : "Your evidence briefing"
+            : hasCopd
+              ? "What continuing to smoke could mean for your COPD"
+              : "What the research says could change for you"
         }
         text={
           synthetic
             ? "See how reviewed research is explained for the fictional profile below."
-            : "A plain-English summary of the most relevant reviewed research, based on the broad details you entered."
+            : "Your most relevant measured risks and benefits come first, with the source and the limits beside each one."
         }
       />
       {synthetic && (
@@ -1386,6 +1399,53 @@ function EvidencePage({
                 <p>{brief.overview}</p>
               </div>
             </div>
+            {brief.quantified_facts && brief.quantified_facts.length > 0 && (
+              <div className="impact-facts">
+                {brief.quantified_facts.map((fact) => {
+                  const source = records.find(
+                    (item) => item.id === fact.evidence_id,
+                  );
+                  const metric = source?.[fact.metric];
+                  if (!source || !metric) return null;
+                  return (
+                    <article
+                      className={`impact-fact impact-${fact.kind}`}
+                      key={`${fact.evidence_id}-${fact.metric}`}
+                    >
+                      <div className="impact-label-row">
+                        <span>
+                          {fact.kind === "risk"
+                            ? "Risk of continuing"
+                            : "Measured benefit"}
+                        </span>
+                        <strong className={`certainty-${fact.certainty}`}>
+                          {fact.certainty} certainty
+                        </strong>
+                      </div>
+                      <p className="impact-metric">{metric}</p>
+                      <h3>{fact.title}</h3>
+                      <p>{fact.explanation}</p>
+                      <p className="impact-relevance">
+                        <strong>Why it was selected for you:</strong>{" "}
+                        {fact.why_it_matters}
+                      </p>
+                      <p className="impact-population">
+                        <strong>Who was studied:</strong> {source.population}
+                        {source.sampleSize ? `. ${source.sampleSize}.` : "."}
+                      </p>
+                      <p className="impact-caveat">
+                        <Info size={15} /> {fact.caveat}
+                      </p>
+                      <EvidenceCitations
+                        ids={[fact.evidence_id]}
+                        records={records}
+                        onOpen={openReference}
+                      />
+                    </article>
+                  );
+                })}
+              </div>
+            )}
             <div className="brief-points">
               {brief.key_points?.map((point, index) => (
                 <article key={`${point.title}-${index}`}>

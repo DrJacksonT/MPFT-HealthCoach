@@ -118,7 +118,14 @@ describe("verified evidence boundary", () => {
         2,
         ["copd"],
       ).map((item) => item.id),
-    ).toEqual(["nice-copd-smoking-risk", "nice-copd-prognosis-factors"]);
+    ).toEqual([
+      "lung-health-study-copd-mortality",
+      "lung-health-study-copd-lung-function",
+    ]);
+    expect(
+      eligible.find((item) => item.id === "lung-health-study-copd-lung-function")
+        ?.absoluteEffect,
+    ).toMatch(/31 mL\/year.*62 mL\/year/);
   });
 });
 describe("safety routes", () => {

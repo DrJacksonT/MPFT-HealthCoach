@@ -30,6 +30,7 @@ export interface EvidenceRecord {
   doi?: string;
   sourceType:
     | "guideline"
+    | "randomised-trial"
     | "systematic-review"
     | "public-health-resource"
     | "service-resource";
@@ -45,6 +46,7 @@ export interface EvidenceRecord {
   confidenceInterval?: string;
   absoluteEffect?: string;
   relativeEffect?: string;
+  impactDirection?: "risk" | "benefit";
   mainFinding: string;
   patientFriendlySummary: string;
   applicabilityTags: string[];
