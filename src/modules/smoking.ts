@@ -18,6 +18,12 @@ export const smokingModule: HealthModule = {
       new Set([
         "overall",
         "cessation-support",
+        assessment.intention,
+        ...(assessment.vaping !== "no" &&
+        assessment.vaping !== "prefer-not-to-say"
+          ? ["vaping"]
+          : []),
+        ...(assessment.confidence <= 5 ? ["confidence"] : []),
         ...assessment.conditions,
         ...assessment.motivations,
       ]),

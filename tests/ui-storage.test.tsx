@@ -56,7 +56,7 @@ describe("local demo data lifecycle", () => {
     );
     fireEvent.click(
       screen.getByRole("button", {
-        name: /See evidence that may be relevant/i,
+        name: /Create my evidence briefing/i,
       }),
     );
     await waitFor(() => expect(localStorage.getItem(key)).not.toBeNull());

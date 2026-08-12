@@ -45,7 +45,11 @@ export async function generateCoachReply(
     };
   const started = Date.now();
   const model = process.env.OPENAI_COACH_MODEL ?? "gpt-5.6-luna";
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    timeout: 25_000,
+    maxRetries: 0,
+  });
   const allowed = evidence.map((item) => ({
     id: item.id,
     summary: item.patientFriendlySummary,
@@ -56,6 +60,8 @@ export async function generateCoachReply(
   const response = await client.responses.parse({
     model,
     store: false,
+    reasoning: { effort: "low" },
+    max_output_tokens: 1_800,
     input: [
       {
         role: "system",

@@ -60,6 +60,27 @@ interface CoachReply {
   message?: string;
   citations?: CoachCitation[];
 }
+interface EvidenceBrief {
+  kind: string;
+  generatedBy?: "ai" | "reviewed-template";
+  headline?: string;
+  overview?: string;
+  key_points?: {
+    title: string;
+    explanation: string;
+    why_it_matters: string;
+    evidence_ids: string[];
+    certainty: "high" | "moderate" | "limited";
+  }[];
+  context_notes?: {
+    factor: string;
+    explanation: string;
+    evidence_ids: string[];
+  }[];
+  important_uncertainties?: string[];
+  follow_up_suggestions?: string[];
+  message?: string;
+}
 
 const STORAGE_KEY = "evidence-coach-demo-v1";
 const empty: DemoState = { version: 1, synthetic: true, checkIns: [] };
@@ -318,6 +339,7 @@ export function CoachApp({
         )}
         {view === "evidence" && assessment && (
           <EvidencePage
+            key={JSON.stringify(assessment)}
             assessment={assessment}
             records={ranked}
             synthetic={state.synthetic}
@@ -506,7 +528,7 @@ function Landing({
               "Review",
               "Your smoking, priorities and confidence",
             ],
-            [BookOpen, "2", "Understand", "Evidence selected for relevance"],
+            [BookOpen, "2", "Understand", "A plain-English evidence briefing"],
             [Target, "3", "Plan", "A goal you choose"],
             [BarChart3, "4", "Check in", "Progress without judgement"],
           ].map(([Icon, n, t, d]) => (
@@ -596,9 +618,8 @@ function Landing({
                 </div>
               </dl>
               <p className="persona-preview-explanation">
-                The next screen will rank evidence using this profile’s
-                motivations and health conditions, with general stop-smoking
-                evidence included too.
+                The next screen will bring together reviewed evidence using
+                this profile’s smoking pattern, goals and health areas.
               </p>
               <button
                 className="primary"
@@ -943,7 +964,7 @@ function Review({
           </small>
         </div>
         <button className="primary large" type="submit">
-          See evidence that may be relevant <ArrowRight size={18} />
+          Create my evidence briefing <ArrowRight size={18} />
         </button>
       </form>
     </section>
@@ -963,10 +984,58 @@ function EvidencePage({
   personaName?: string;
   onPlan: () => void;
 }) {
+  const [brief, setBrief] = useState<EvidenceBrief | null>(null);
+  const [briefStatus, setBriefStatus] = useState<
+    "loading" | "ready" | "error"
+  >("loading");
   const selected = [...assessment.motivations, ...assessment.conditions]
     .filter((x) => x !== "none" && x !== "prefer-not-to-say")
     .map(displayTag);
   const rankingTags = smokingModule.evidenceTags(assessment);
+  const evidenceIds = useMemo(() => records.map((item) => item.id), [records]);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/evidence-summary", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ evidenceIds, context: assessment }),
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = (await response.json()) as EvidenceBrief;
+        if (!response.ok || data.kind === "error") throw new Error();
+        setBrief(data);
+        setBriefStatus("ready");
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setBriefStatus("error");
+      });
+    return () => controller.abort();
+  }, [assessment, evidenceIds]);
+
+  function openReference(id: string) {
+    const reference = document.getElementById(
+      `reference-${id}`,
+    ) as HTMLDetailsElement | null;
+    if (!reference) return;
+    reference.open = true;
+    reference.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  const profileFactors = [
+    `Age ${assessment.ageBand}`,
+    `${assessment.cigarettesPerDay} cigarettes a day`,
+    `${assessment.yearsSmoked} years smoking`,
+    ...assessment.conditions
+      .filter((item) => item !== "none" && item !== "prefer-not-to-say")
+      .map(displayTag),
+    assessment.intention === "quit"
+      ? "Wants to quit"
+      : assessment.intention === "reduce"
+        ? "Wants to cut down"
+        : "Exploring options",
+  ];
   return (
     <section className="content">
       <PageHead
@@ -974,12 +1043,12 @@ function EvidencePage({
         title={
           synthetic
             ? `${personaName ?? "Fictional profile"} demo`
-            : "What quitting could mean for you"
+            : "Your evidence briefing"
         }
         text={
           synthetic
-            ? "You are exploring evidence for the fictional profile shown below. These are not your details and this is not a personal prediction."
-            : "We ranked reviewed population evidence using the broad categories you selected. It cannot predict exactly what will happen to you."
+            ? "See how reviewed research is explained for the fictional profile below."
+            : "A plain-English summary of the most relevant reviewed research, based on the broad details you entered."
         }
       />
       {synthetic && (
@@ -1009,27 +1078,142 @@ function EvidencePage({
           </dl>
         </div>
       )}
-      <div className="relevance-strip">
-        <Sparkles />
+      <div className="profile-factors" aria-label="Details used for this briefing">
+        <strong>Based on:</strong>
+        {profileFactors.map((factor) => (
+          <span key={factor}>{factor}</span>
+        ))}
+      </div>
+
+      <section className="evidence-brief" aria-live="polite">
+        {briefStatus === "loading" && (
+          <div className="brief-loading">
+            <span className="brief-icon">
+              <Sparkles />
+            </span>
+            <div>
+              <p className="eyebrow">Preparing your evidence briefing</p>
+              <h2>Bringing the important findings together…</h2>
+              <p>
+                We are checking the selected research against the broad details
+                above.
+              </p>
+            </div>
+          </div>
+        )}
+        {briefStatus === "error" && (
+          <div className="brief-error">
+            <CircleAlert />
+            <div>
+              <strong>The summary is temporarily unavailable</strong>
+              <p>
+                You can still open the reviewed evidence selected for you below.
+              </p>
+            </div>
+          </div>
+        )}
+        {briefStatus === "ready" && brief?.headline && (
+          <>
+            <div className="brief-heading">
+              <span className="brief-icon">
+                <Sparkles />
+              </span>
+              <div>
+                <p className="eyebrow">
+                  {brief.generatedBy === "ai"
+                    ? "AI summary of reviewed evidence"
+                    : "Plain-English summary of reviewed evidence"}
+                </p>
+                <h2>{brief.headline}</h2>
+                <p>{brief.overview}</p>
+              </div>
+            </div>
+            <div className="brief-points">
+              {brief.key_points?.map((point, index) => (
+                <article key={`${point.title}-${index}`}>
+                  <span className="point-number">{index + 1}</span>
+                  <div>
+                    <div className="point-heading">
+                      <h3>{point.title}</h3>
+                      <strong className={`certainty-${point.certainty}`}>
+                        <i /> {point.certainty} certainty
+                      </strong>
+                    </div>
+                    <p>{point.explanation}</p>
+                    <p className="why-it-matters">
+                      <strong>Why this may matter to you:</strong>{" "}
+                      {point.why_it_matters}
+                    </p>
+                    <EvidenceCitations
+                      ids={point.evidence_ids}
+                      records={records}
+                      onOpen={openReference}
+                    />
+                  </div>
+                </article>
+              ))}
+            </div>
+            {brief.context_notes && brief.context_notes.length > 0 && (
+              <div className="context-section">
+                <div>
+                  <p className="eyebrow">Your situation</p>
+                  <h3>How your details affect what we selected</h3>
+                </div>
+                <div className="context-notes">
+                  {brief.context_notes.map((note, index) => (
+                    <article key={`${note.factor}-${index}`}>
+                      <strong>{note.factor}</strong>
+                      <p>{note.explanation}</p>
+                      <EvidenceCitations
+                        ids={note.evidence_ids}
+                        records={records}
+                        onOpen={openReference}
+                      />
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="uncertainty-box">
+              <Info />
+              <div>
+                <h3>What the research cannot tell you exactly</h3>
+                <ul>
+                  {brief.important_uncertainties?.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </>
+        )}
+      </section>
+
+      <EvidenceQuestion
+        assessment={assessment}
+        records={records}
+        suggestions={brief?.follow_up_suggestions ?? []}
+        onOpenReference={openReference}
+      />
+
+      <div className="evidence-library-heading">
         <div>
-          <strong>How these cards were chosen</strong>
+          <p className="eyebrow">Selected sources</p>
+          <h2>Explore the evidence behind your summary</h2>
           <p>
             {selected.length
-              ? `${synthetic ? "This profile" : "Your selections"} includes: ${selected.join(", ")}. `
-              : `${synthetic ? "This profile has" : "You selected"} no specific health areas. `}
-            Each card is scored against those details. General quitting and
-            stop-smoking support evidence is included, then the highest-scoring
-            cards appear first. No AI model chooses the order or calculates a
-            personal risk.
+              ? `We matched sources to ${selected.join(", ")}, your smoking pattern and your goal.`
+              : "We matched general stop-smoking research to your smoking pattern and goal."}
+            {" "}Open any source to see its findings, limits and full reference.
           </p>
         </div>
       </div>
-      <div className="evidence-grid">
+      <div className="evidence-reference-list">
         {records.map((item, i) => (
-          <EvidenceCard
+          <EvidenceReference
             key={item.id}
             item={item}
-            primary={i === 0}
+            number={i + 1}
             matchingTags={item.applicabilityTags.filter((tag) =>
               rankingTags.includes(tag),
             )}
@@ -1049,52 +1233,81 @@ function EvidencePage({
     </section>
   );
 }
-function EvidenceCard({
+
+function EvidenceCitations({
+  ids,
+  records,
+  onOpen,
+}: {
+  ids: string[];
+  records: EvidenceRecord[];
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <span className="evidence-citations" aria-label="Supporting evidence">
+      Evidence{" "}
+      {ids.map((id) => {
+        const number = records.findIndex((record) => record.id === id) + 1;
+        return number > 0 ? (
+          <button
+            type="button"
+            key={id}
+            onClick={() => onOpen(id)}
+            aria-label={`Open evidence source ${number}`}
+          >
+            [{number}]
+          </button>
+        ) : null;
+      })}
+    </span>
+  );
+}
+
+function EvidenceReference({
   item,
-  primary,
+  number,
   matchingTags = [],
 }: {
   item: EvidenceRecord;
-  primary?: boolean;
+  number: number;
   matchingTags?: string[];
 }) {
   return (
-    <article className={`evidence-card ${primary ? "featured" : ""}`}>
-      <div className="card-kicker">
-        <span>{item.applicabilityTags[0]?.replace("-", " ")}</span>
-        <span className="verified">
-          <Check size={12} /> VERIFIED
+    <details className="evidence-reference" id={`reference-${item.id}`}>
+      <summary>
+        <span className="reference-number">{number}</span>
+        <span className="reference-summary">
+          <small>
+            {item.organisation}, {item.publicationYear}
+          </small>
+          <strong>{item.patientFriendlySummary}</strong>
+          {matchingTags.length > 0 && (
+            <span>Selected for: {matchingTags.map(displayTag).join(", ")}</span>
+          )}
         </span>
-      </div>
-      {matchingTags.length > 0 && (
-        <p className="card-relevance">
-          <strong>Why shown:</strong> {matchingTags.map(displayTag).join(", ")}
-        </p>
-      )}
-      <h2>{item.patientFriendlySummary}</h2>
-      {item.absoluteEffect && (
-        <div className="number-box">
-          <strong>{item.absoluteEffect.split("(")[0]}</strong>
-          <span>
-            {item.comparator
-              ? `Compared with ${item.comparator.toLowerCase()}`
-              : "In the studied population"}
-          </span>
-        </div>
-      )}
-      <p>{item.mainFinding}</p>
-      <div className="certainty-row">
-        <span>How certain are we?</span>
-        <strong className={`certainty-${item.evidenceConfidence}`}>
-          <i />
+        <span className="reference-certainty">
+          <i className={`certainty-${item.evidenceConfidence}`} />
           {item.evidenceConfidence}
-        </strong>
-      </div>
-      <details>
-        <summary>
-          Tell me more <ChevronDown size={16} />
-        </summary>
-        <div className="details-body">
+        </span>
+        <ChevronDown className="reference-chevron" size={20} />
+      </summary>
+      <div className="reference-body">
+        <div className="reference-plain-language">
+          <h3>What the study found</h3>
+          <p>{item.mainFinding}</p>
+          {item.absoluteEffect && (
+            <div className="number-box">
+              <strong>{item.absoluteEffect.split("(")[0]}</strong>
+              <span>
+                {item.comparator
+                  ? `Compared with ${item.comparator.toLowerCase()}`
+                  : "In the studied population"}
+              </span>
+            </div>
+          )}
+        </div>
+        <div className="reference-study-details">
+          <h3>Who and what was studied</h3>
           {item.effectValue && (
             <dl>
               <div>
@@ -1117,29 +1330,138 @@ function EvidenceCard({
               </div>
             </dl>
           )}
-          <h3>Limits and applicability</h3>
+          <h3>Important limits</h3>
           <ul>
             {item.limitations.map((x) => (
               <li key={x}>{x}</li>
             ))}
           </ul>
-          <p className="no-prediction">
-            <Info size={15} /> No. This does not predict exactly what will
-            happen to you.
-          </p>
         </div>
-      </details>
-      <a className="citation" href={item.url} target="_blank" rel="noreferrer">
-        <BookOpen size={17} />
-        <span>
-          <small>
-            {item.sourceType.replace("-", " ")}, {item.publicationYear}
-          </small>
-          {item.organisation}: {item.title}
-        </span>
-        <ExternalLink size={15} />
-      </a>
-    </article>
+      </div>
+      <div className="reference-footer">
+        <p>
+          <Info size={15} /> This source helps explain outcomes in groups. It
+          cannot predict exactly what will happen to you.
+        </p>
+        <a href={item.url} target="_blank" rel="noreferrer">
+          Read the full source <ExternalLink size={15} />
+        </a>
+      </div>
+    </details>
+  );
+}
+
+function EvidenceQuestion({
+  assessment,
+  records,
+  suggestions,
+  onOpenReference,
+}: {
+  assessment: Assessment;
+  records: EvidenceRecord[];
+  suggestions: string[];
+  onOpenReference: (id: string) => void;
+}) {
+  const [message, setMessage] = useState("");
+  const [reply, setReply] = useState<CoachReply | null>(null);
+  const [busy, setBusy] = useState(false);
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setReply(null);
+    try {
+      const response = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          message,
+          evidenceIds: records.map((item) => item.id),
+          context: assessment,
+        }),
+      });
+      setReply((await response.json()) as CoachReply);
+    } catch {
+      setReply({
+        kind: "error",
+        message: "The evidence coach is temporarily unavailable.",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="evidence-question">
+      <div>
+        <p className="eyebrow">Ask about your briefing</p>
+        <h2>What would you like explained?</h2>
+        <p>
+          Ask a follow-up in your own words. Answers use only the selected
+          reviewed evidence.
+        </p>
+      </div>
+      <form onSubmit={submit}>
+        <label htmlFor="evidence-question">Your question</label>
+        <div>
+          <input
+            id="evidence-question"
+            maxLength={800}
+            required
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder="For example, what matters most for someone like me?"
+          />
+          <button className="primary" disabled={busy}>
+            {busy ? "Checking the evidence…" : "Ask a follow-up"}
+          </button>
+        </div>
+        <small>Do not enter names, contact details or new medical details.</small>
+      </form>
+      {suggestions.length > 0 && (
+        <div className="evidence-question-suggestions">
+          {suggestions.map((suggestion) => (
+            <button
+              type="button"
+              key={suggestion}
+              onClick={() => setMessage(suggestion)}
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
+      {reply && (
+        <div className={`evidence-answer ${reply.kind}`} aria-live="polite">
+          <span className="brief-icon">
+            <Sparkles />
+          </span>
+          <div>
+            {reply.summary && <h3>{reply.summary}</h3>}
+            {reply.why_relevant && <p>{reply.why_relevant}</p>}
+            {reply.claims?.map((claim, index) => (
+              <div key={index} className="answer-claim">
+                <p>{claim.text}</p>
+                <EvidenceCitations
+                  ids={claim.evidence_ids}
+                  records={records}
+                  onOpen={onOpenReference}
+                />
+              </div>
+            ))}
+            {reply.limitations && reply.limitations.length > 0 && (
+              <ul>
+                {reply.limitations.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            )}
+            {reply.coaching_question && (
+              <p className="answer-next-question">{reply.coaching_question}</p>
+            )}
+            {reply.message && <p>{reply.message}</p>}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -1695,11 +2017,7 @@ function Coach({
         body: JSON.stringify({
           message,
           evidenceIds: records.map((x) => x.id),
-          context: {
-            intention: assessment.intention,
-            importance: assessment.importance,
-            confidence: assessment.confidence,
-          },
+          context: assessment,
         }),
       });
       setReply((await res.json()) as CoachReply);
@@ -1895,7 +2213,10 @@ function EmptyReview({ onStart }: { onStart: () => void }) {
       <div className="empty">
         <ClipboardList />
         <h1>Complete your smoking review first</h1>
-        <p>The programme uses structured answers to rank relevant evidence.</p>
+        <p>
+          The programme uses structured answers to select evidence, then
+          explains the combined findings in plain English.
+        </p>
         <button className="primary" onClick={onStart}>
           Start review
         </button>
