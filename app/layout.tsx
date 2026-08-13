@@ -6,19 +6,19 @@ export const metadata: Metadata = {
     template: "%s | Evidence Coach",
   },
   description:
-    "A guided smoking review with clear evidence and practical coaching.",
+    "Review smoking evidence and choose practical next steps.",
   icons: { icon: "/favicon.svg" },
   openGraph: {
     title: "Evidence you can use",
     description:
-      "Personalised smoking evidence with source-bound risks, benefits and clear limits.",
+      "Personalised smoking evidence with referenced sources, benefits, risks and clear limits.",
     images: [{ url: "/og.png", width: 1728, height: 910 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Evidence you can use",
     description:
-      "Personalised smoking evidence with source-bound risks, benefits and clear limits.",
+      "Personalised smoking evidence with referenced sources, benefits, risks and clear limits.",
     images: ["/og.png"],
   },
 };

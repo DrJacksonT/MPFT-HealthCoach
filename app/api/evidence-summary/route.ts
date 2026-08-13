@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       {
         kind: "error",
         message:
-          "We could not prepare the plain-English evidence briefing just now.",
+          "We could not prepare the evidence briefing in plain English just now.",
       },
       { status: 503, headers: noStore },
     );

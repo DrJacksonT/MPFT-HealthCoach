@@ -563,7 +563,7 @@ function DemoModeBar({
       <div>
         <span className="demo-mode-label">DEMO MODE</span>
         <strong>{personaName}</strong>
-        <small>Fictional details — not your information</small>
+        <small>Fictional example. This is not your information.</small>
       </div>
       <div className="demo-mode-actions">
         <button type="button" onClick={onChange}>
@@ -608,7 +608,7 @@ function AccountPanel({
           <span>
             Your complete review profile, goals and check-ins are saved. Your
             review fields are supplied to the evidence AI when it prepares a
-            briefing or answers a follow-up.
+            briefing or answers another question.
             {insights?.progress?.check_in_count
               ? ` ${insights.progress.check_in_count} check-ins, ${insights.progress.smoke_free_check_ins ?? 0} smoke-free.`
               : ""}
@@ -805,7 +805,6 @@ function Landing({
       />
       <section className="capabilities" id="capabilities">
         <div>
-          <p className="eyebrow">A guided programme, not a blank chatbot</p>
           <h2>From understanding to a next step</h2>
         </div>
         <div className="journey" aria-label="Programme steps">
@@ -816,7 +815,7 @@ function Landing({
               "Review",
               "Your smoking, priorities and confidence",
             ],
-            [BookOpen, "2", "Understand", "A plain-English evidence briefing"],
+            [BookOpen, "2", "Understand", "An evidence briefing in plain English"],
             [Target, "3", "Plan", "A goal you choose"],
             [BarChart3, "4", "Check in", "Progress without judgement"],
           ].map(([Icon, n, t, d]) => (
@@ -1451,7 +1450,7 @@ function EvidencePage({
         </summary>
         <div>
           <p>
-            These are sent with each evidence briefing and follow-up so the AI
+            These are sent with each evidence briefing and later question so the AI
             can interpret the reviewed literature in context. A field may be
             considered without changing the recommendation when the literature
             does not support a stronger link.
@@ -1504,7 +1503,7 @@ function EvidencePage({
                 <p className="eyebrow">
                   {brief.generatedBy === "ai"
                     ? "AI summary of reviewed evidence"
-                    : "Plain-English summary of reviewed evidence"}
+                    : "Summary of reviewed evidence in plain English"}
                 </p>
                 <h2>{brief.headline}</h2>
                 <p>{brief.overview}</p>
@@ -1586,7 +1585,7 @@ function EvidencePage({
                         </div>
                         {step.needs_professional_discussion && (
                           <p className="professional-note">
-                            A stop-smoking adviser, pharmacist or clinician
+                            A stop smoking adviser, pharmacist or clinician
                             should discuss suitability with you.
                           </p>
                         )}
@@ -1868,7 +1867,7 @@ function EvidenceQuestion({
         <p className="eyebrow">Ask about your briefing</p>
         <h2>What would you like explained?</h2>
         <p>
-          Ask a follow-up in your own words. Answers use only the selected
+          Ask another question in your own words. Answers use only the selected
           reviewed evidence.
         </p>
       </div>
@@ -1884,7 +1883,7 @@ function EvidenceQuestion({
             placeholder="For example, what matters most for someone like me?"
           />
           <button className="primary" disabled={busy}>
-            {busy ? "Checking the evidence…" : "Ask a follow-up"}
+            {busy ? "Checking the evidence…" : "Ask another question"}
           </button>
         </div>
         <small>Do not enter names, contact details or new medical details.</small>
@@ -2055,7 +2054,7 @@ function Plan({
         <div>
           <strong>Support can sit alongside your plan</strong>
           <p>
-            A pharmacist, GP or stop-smoking adviser can discuss general options
+            A pharmacist, GP or stop smoking adviser can discuss general options
             in light of your health and medicines. This prototype cannot select
             treatment for you.
           </p>
@@ -2318,7 +2317,7 @@ function Progress({
     <section className="content">
       <PageHead
         eyebrow="Progress"
-        title="Notice patterns, not perfection"
+        title="Your progress over time"
         text="A lapse does not erase progress. Missing days simply mean that no check-in was recorded. We do not treat them as smoking or as abstinence."
       />
       <div className="stats">
@@ -2539,7 +2538,7 @@ function Coach({
       setReply({
         kind: "error",
         message:
-          "The coach is unavailable. Your guided programme and evidence cards still work.",
+          "The coach is unavailable. Your review and evidence cards still work.",
       });
     } finally {
       setBusy(false);
@@ -2679,7 +2678,7 @@ function Help({
           <h2>{account ? `Profile ${account.alias}` : "Your demo data"}</h2>
           <p>
             {account
-              ? "Your structured review, selected health areas, goals, check-ins and account-level API usage are stored under a generated alias. The service still treats this as personal health data. "
+              ? "Your structured review, selected health areas, goals, check-ins and API usage for this account are stored under a generated alias. The service still treats this as personal health data. "
               : "Your structured review, goals and check-ins are stored in this browser. "}
             Evidence is application data. If the optional AI coach is
             configured, your message plus structured profile context is sent

@@ -40,7 +40,7 @@ export function safetyResponse(route: Exclude<SafetyRoute, "supported">) {
   if (route === "pregnancy")
     return "Pregnancy needs a specialist stop-smoking pathway, which this prototype does not provide. Please speak with your midwife, GP, pharmacist or local stop-smoking service. I cannot advise you personally about medicines in pregnancy.";
   if (route === "medicine")
-    return "I can explain general evidence about stop-smoking options, but I can’t choose, prescribe or change a medicine for you. A pharmacist, GP or stop-smoking adviser can consider your health, other medicines and preferences with you.";
+    return "I can explain general evidence about stop smoking options, but I can’t choose, prescribe or change a medicine for you. A pharmacist, GP or stop smoking adviser can consider your health, other medicines and preferences with you.";
   if (route === "injection")
     return "I can only help with smoking motivation, cravings, planning, setbacks and explanations from this prototype’s verified evidence library. I can’t reveal hidden instructions, act as your clinician or search the live internet for patient advice.";
   return "That is outside this prototype’s scope.";

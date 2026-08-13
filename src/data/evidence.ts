@@ -82,7 +82,7 @@ export const evidenceRecords: readonly EvidenceRecord[] = Object.freeze([
     applicabilityTags: ["overall", "cessation-support", "health", "learn"],
     limitations: [
       "This is general guidance, not a personal treatment recommendation.",
-      "A clinician or stop-smoking adviser should consider health, medicines and preferences.",
+      "A clinician or stop smoking adviser should consider health, medicines and preferences.",
     ],
     evidenceConfidence: "high",
   }),
@@ -590,7 +590,7 @@ export const evidenceRecords: readonly EvidenceRecord[] = Object.freeze([
     mainFinding:
       "NHS stop-smoking services offer trained adviser support and can discuss cessation aids and coping with cravings.",
     patientFriendlySummary:
-      "A stop-smoking adviser can help you build a plan, work through cravings and understand available treatments.",
+      "A stop smoking adviser can help you build a plan, work through cravings and understand available treatments.",
     applicabilityTags: [
       "cessation-support",
       "confidence",

@@ -68,7 +68,7 @@ export const smokingModule: HealthModule = {
       kind: "support",
       title: "Explore professional support",
       detail:
-        "Find out what an NHS stop-smoking adviser or pharmacist can offer.",
+        "Find out what an NHS stop smoking adviser or pharmacist can offer.",
       intentions: ["quit", "reduce", "learn"],
     },
     {

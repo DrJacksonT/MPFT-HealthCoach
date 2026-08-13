@@ -5,7 +5,7 @@ import { CoachApp } from "@/src/ui/CoachApp";
 export const metadata: Metadata = {
   title: "Evidence Coach: smoking prototype",
   description:
-    "A guided smoking review with clear evidence and practical coaching.",
+    "Review smoking evidence and choose practical next steps.",
 };
 
 export default function Home() {
