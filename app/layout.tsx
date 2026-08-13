@@ -7,7 +7,10 @@ export const metadata: Metadata = {
   },
   description:
     "Review smoking evidence and choose practical next steps.",
-  icons: { icon: "/favicon.svg" },
+  icons: {
+    icon: [{ url: "/favicon.svg?v=2", type: "image/svg+xml" }],
+    shortcut: ["/favicon.svg?v=2"],
+  },
   openGraph: {
     title: "Evidence you can use",
     description:
