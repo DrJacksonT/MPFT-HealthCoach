@@ -8,6 +8,8 @@ type Mail = { to: string; subject: string; text: string };
 
 export async function sendMail(mail: Mail) {
   const env = environment();
+  if (env.MAIL_TRANSPORT === "disabled")
+    throw new Error("Email delivery is not configured for this environment.");
   if (env.MAIL_TRANSPORT === "smtp") {
     const transporter = nodemailer.createTransport({
       host: env.SMTP_HOST,

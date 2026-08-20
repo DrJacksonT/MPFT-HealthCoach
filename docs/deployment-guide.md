@@ -6,7 +6,7 @@ This guide describes a future controlled deployment. It does not authorise one. 
 
 - Node.js 24 LTS runs the Next.js application behind an approved TLS reverse proxy.
 - A managed PostgreSQL service supplies `DATABASE_URL`; PGlite is for local development and automated assurance only.
-- Transactional email uses an approved SMTP service. Mailpit and the local-file adapter are development-only.
+- Transactional email uses an approved SMTP service. Mailpit and the local-file adapter are development-only. Set `MAIL_TRANSPORT=disabled` for a production synthetic deployment until an approved provider and sending domain exist; email registration and reset delivery then fail closed.
 - Application instances share no durable local state. Secrets come from the hosting platform, not files committed to source control.
 - The public health check is `GET /api/health`. It returns only `ready` or `unavailable` and no configuration details.
 

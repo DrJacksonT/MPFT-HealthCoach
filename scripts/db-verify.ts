@@ -1,9 +1,10 @@
 import { sql } from "drizzle-orm";
 import { closeDb, databaseKind, getDb } from "../db/index";
+import { firstQueryRow } from "../db/query-result";
 
 async function main() {
   const db = await getDb();
-  const result = (await db.execute(sql`
+  const result = await db.execute(sql`
     select
       (select count(*)::int from studies) as studies,
       (select count(*)::int from identity.users) as users,
@@ -13,15 +14,15 @@ async function main() {
       (select count(*)::int from releases
         where status = 'authorised'
           and release_type in ('participant_recruitment', 'live_ai', 'gambling_participant')) as authorised_live_releases
-  `)) as { rows: Array<{
+  `);
+  const row = firstQueryRow<{
     studies: number;
     users: number;
     participants: number;
     non_synthetic_participants: number;
     staff_roles: number;
     authorised_live_releases: number;
-  }> };
-  const row = result.rows[0];
+  }>(result);
   if (!row || row.studies < 2 || row.users < 5 || row.participants < 1 || row.staff_roles < 4)
     throw new Error("Required fictional seed records are missing.");
   if (row.non_synthetic_participants !== 0)

@@ -49,7 +49,7 @@ export function LoginForm({ showSyntheticCredentials }: { showSyntheticCredentia
   );
 }
 
-export function RegisterForm() {
+export function RegisterForm({ emailEnabled = true }: { emailEnabled?: boolean }) {
   const [identityKind, setIdentityKind] = useState<"email" | "alias">("alias");
   const [status, setStatus] = useState<FormStatus>({ kind: "idle" });
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -77,7 +77,8 @@ export function RegisterForm() {
       {status.kind === "error" && <div className="error-summary" role="alert"><strong>There is a problem</strong><p>{status.message}</p></div>}
       {status.kind === "success" && <div className="success-summary" role="status"><strong>Account created</strong><p>{status.message}</p><Link href="/login">Go to sign in</Link></div>}
       <label className="field"><span>Invitation code</span><span className="hint">For the fictional route, use the code supplied in the local test runbook.</span><input name="invitationCode" autoComplete="off" required /></label>
-      <fieldset className="segmented-field"><legend>Account identity</legend><label><input type="radio" name="identityKind" checked={identityKind === "alias"} onChange={() => setIdentityKind("alias")} />Alias</label><label><input type="radio" name="identityKind" checked={identityKind === "email"} onChange={() => setIdentityKind("email")} />Email</label></fieldset>
+      <fieldset className="segmented-field"><legend>Account identity</legend><label><input type="radio" name="identityKind" checked={identityKind === "alias"} onChange={() => setIdentityKind("alias")} />Alias</label>{emailEnabled && <label><input type="radio" name="identityKind" checked={identityKind === "email"} onChange={() => setIdentityKind("email")} />Email</label>}</fieldset>
+      {!emailEnabled && <p className="hint">Email registration is disabled until an approved delivery provider and domain are configured.</p>}
       <label className="field"><span>{identityKind === "alias" ? "Choose an alias" : "Email address"}</span><input name="identity" type={identityKind === "email" ? "email" : "text"} autoComplete="username" required /></label>
       <label className="field"><span>Display name</span><span className="hint">Use a fictional name for this technical test.</span><input name="displayName" autoComplete="nickname" maxLength={80} required /></label>
       <label className="field"><span>Password</span><span className="hint">At least 12 characters. A longer passphrase is easier to remember.</span><input name="password" type="password" autoComplete="new-password" minLength={12} required /></label>

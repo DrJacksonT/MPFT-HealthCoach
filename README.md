@@ -116,7 +116,7 @@ Both commands refuse overwrite. Production PostgreSQL uses encrypted `pg_dump`/`
 
 - `LIVE_PILOT_ENABLED`, `LIVE_AI_ENABLED` and `GAMBLING_PARTICIPANT_ENABLED` default to `false`.
 - An environment flag alone is never sufficient. The matching release must be authorised, named, dated, not revoked, and contain governance, clinical-safety and deployment approvals.
-- Production startup rejects PGlite, HTTP origins, the file mail sink, the development TOTP adapter, default session secrets, missing live-AI key/budget/pricing, and raw-text storage without an encryption key.
+- Production startup rejects PGlite, HTTP origins, the file mail sink, the development TOTP adapter, default session secrets, missing live-AI key/budget/pricing, and raw-text storage without an encryption key. `MAIL_TRANSPORT=disabled` is the fail-closed production setting until an approved SMTP provider and domain exist; it keeps email registration and reset delivery unavailable while the synthetic alias route remains usable.
 - Default analysis exports exclude contact identity and raw text. Raw coaching text storage is off. `store: false` is used for OpenAI calls, but this is not described as zero retention.
 - Synthetic evidence may support synthetic journeys. Live claims additionally require named release approval, a verified claim decision, active non-expired sources, exact locators, hashed passages and citation linkage.
 

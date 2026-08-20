@@ -5,6 +5,7 @@ import { pricing } from "@/src/telemetry/store";
 import { getDb } from "@/db";
 import { checkIns, costLedger, participants, sessions } from "@/db/schema";
 import { readSession } from "@/src/auth/session";
+import { firstQueryRow } from "@/db/query-result";
 
 const CONSENT_VERSION = "standalone-synthetic-v1-2026-08-20";
 
@@ -90,7 +91,7 @@ export async function saveAccountState(participantId: string, state: DemoState) 
 
 export async function accountInsights(participantId: string) {
   const db = await getDb();
-  const progress = (await db.execute(sql`
+  const progress = await db.execute(sql`
     select
       count(*)::int as check_in_count,
       count(*) filter (where cigarettes = 0)::int as smoke_free_check_ins,
@@ -99,12 +100,15 @@ export async function accountInsights(participantId: string) {
       avg(cigarettes)::float as average_cigarettes
     from research.check_ins
     where participant_id = ${participantId}::uuid and status = 'completed'
-  `)) as { rows: Array<Record<string, unknown>> };
-  const usage = (await db.execute(sql`
+  `);
+  const usage = await db.execute(sql`
     select count(*)::int as request_count, coalesce(sum(cost_usd), 0)::float as approximate_cost_usd
     from operations.cost_ledger where participant_id = ${participantId}::uuid
-  `)) as { rows: Array<Record<string, unknown>> };
-  return { progress: progress.rows[0], usage: usage.rows[0] };
+  `);
+  return {
+    progress: firstQueryRow<Record<string, unknown>>(progress),
+    usage: firstQueryRow<Record<string, unknown>>(usage),
+  };
 }
 
 export async function deleteAccount(participantId: string) {

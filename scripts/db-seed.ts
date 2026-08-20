@@ -26,6 +26,7 @@ import {
   users,
 } from "../db/schema";
 import { hashToken } from "../src/auth/crypto";
+import { firstQueryRow } from "../db/query-result";
 
 const ids = {
   smokingStudy: "10000000-0000-4000-8000-000000000001",
@@ -578,14 +579,14 @@ async function main() {
     )
     .onConflictDoNothing();
 
-  const result = (await db.execute(sql`
+  const result = await db.execute(sql`
     select
       (select count(*)::int from studies) as studies,
       (select count(*)::int from identity.users) as users,
       (select count(*)::int from research.participants) as participants,
       (select count(*)::int from releases where status = 'authorised') as authorised_releases
-  `)) as { rows: Array<Record<string, unknown>> };
-  console.log(`Seeded ${databaseKind()} with fictional records:`, result.rows[0]);
+  `);
+  console.log(`Seeded ${databaseKind()} with fictional records:`, firstQueryRow<Record<string, unknown>>(result));
 }
 
 main()

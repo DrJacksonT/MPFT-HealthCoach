@@ -18,7 +18,7 @@ const schema = z
       .default("local-development-session-key-change-before-production"),
     SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(12),
     FIELD_ENCRYPTION_KEY: z.string().optional().or(z.literal("")),
-    MAIL_TRANSPORT: z.enum(["file", "smtp"]).default("file"),
+    MAIL_TRANSPORT: z.enum(["disabled", "file", "smtp"]).default("file"),
     MAIL_FILE_DIR: z.string().default(".data/mail"),
     SMTP_HOST: z.string().default("127.0.0.1"),
     SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(1025),

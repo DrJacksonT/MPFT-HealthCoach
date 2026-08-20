@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { getDb } from "@/db";
+import { firstQueryRow } from "@/db/query-result";
 
 export type ResearchSummary = {
   participants: number;
@@ -48,6 +49,8 @@ export async function researchSummary(): Promise<ResearchSummary> {
       (select count(*)::int from coaching.interactions where outcome = 'fallback') coach_fallback,
       (select count(*)::int from coaching.interactions where outcome = 'refused') coach_refused,
       (select coalesce(sum(cost_usd), 0)::text from operations.cost_ledger) cost_usd
-  `) as { rows: ResearchSummary[] };
-  return result.rows[0];
+  `);
+  const summary = firstQueryRow<ResearchSummary>(result);
+  if (!summary) throw new Error("Research summary query returned no rows.");
+  return summary;
 }

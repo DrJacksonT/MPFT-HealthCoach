@@ -65,6 +65,8 @@ export async function registerWithInvitation(input: {
   displayName: string;
   password: string;
 }) {
+  if (input.identityKind === "email" && environment().MAIL_TRANSPORT === "disabled")
+    throw new AuthError("registration_closed");
   const db = await getDb();
   const now = new Date();
   const normalised = normaliseIdentity(input.identityKind, input.identity);
@@ -298,6 +300,7 @@ export async function completeMfa(
 }
 
 export async function requestPasswordReset(identityKind: "email" | "alias", identity: string) {
+  if (identityKind === "email" && environment().MAIL_TRANSPORT === "disabled") return;
   const db = await getDb();
   const normalised = normaliseIdentity(identityKind, identity);
   const [account] = await db

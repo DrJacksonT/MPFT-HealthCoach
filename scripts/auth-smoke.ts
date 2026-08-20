@@ -1,6 +1,7 @@
 import * as OTPAuth from "otpauth";
 import { eq, sql } from "drizzle-orm";
 import { closeDb, getDb } from "../db/index";
+import { firstQueryRow } from "../db/query-result";
 import { sessions } from "../db/schema";
 import { completeMfa, login, registerWithInvitation } from "../src/auth/service";
 
@@ -67,11 +68,10 @@ async function main() {
     .select({ level: sessions.assuranceLevel })
     .from(sessions)
     .where(eq(sessions.id, staffLogin.id));
-  const audit = (await db.execute(sql`select count(*)::int as count from operations.audit_events`)) as {
-    rows: Array<{ count: number }>;
-  };
+  const audit = await db.execute(sql`select count(*)::int as count from operations.audit_events`);
   if (assurance?.level !== 2) throw new Error("Staff session assurance was not raised to level 2.");
-  if ((audit.rows[0]?.count ?? 0) < 5) throw new Error("Authentication audit events are missing.");
+  if ((firstQueryRow<{ count: number }>(audit)?.count ?? 0) < 5)
+    throw new Error("Authentication audit events are missing.");
   console.log("Authentication smoke test passed with participant login, staff TOTP, invite registration and chained audit events.");
 }
 
