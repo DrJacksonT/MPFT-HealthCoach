@@ -1,102 +1,142 @@
-# Evidence Coach: smoking prototype
+# MPFT Behaviour Change Research Platform
 
-A guided, evidence-grounded smoking review and behaviour-change coaching proof of concept. It is a research and development prototype, not an MPFT clinical service.
+A standalone Next.js research platform for a governed feasibility pilot of AI-assisted smoking behaviour change. The repository also contains a staff-only gambling-harm simulation. All supplied accounts, records, screenshots, exports and reports are fictional.
 
-The core journey is structured: review, relevant evidence, chosen goal, check-in, progress, and optional scoped coaching. The evidence page works without a language model. Patient-facing evidence comes only from records that pass the application eligibility rule: `VERIFIED`, active, not superseded, and within the review date.
+Current status: **technically pilot-ready with synthetic/staff test data; not authorised for a live pilot**. Recruitment, live AI and gambling participant access each require an environment flag plus a matching named, dated database release. The seeded releases deliberately fail those gates.
 
-## Safety and data position
+## What works
 
-- Adults aged 18 and over who currently smoke cigarettes are the intended V1 demo audience.
-- Children, pregnancy, diagnosis, symptom assessment, emergencies, prescribing, medicine selection and interaction advice are outside scope.
-- Nobody monitors the tool. It cannot alert a clinician or arrange care.
-- Use synthetic or demonstration information only. Do not enter identifiable or real clinical information.
-- Reviews, goals and check-ins are kept in browser local storage. The visible **Delete my demo data** action clears that state.
-- Remote participant storage is fail-closed. Only an interface and a throwing disabled adapter exist.
-- The patient-facing coach has no live web search, database tool or arbitrary URL access.
-- If an OpenAI key is configured, coach calls happen on the server with `store: false`. This does not amount to a zero-data-retention guarantee. See the [official OpenAI data controls documentation](https://developers.openai.com/api/docs/guides/your-data#default-usage-policies-by-endpoint).
+- Invitation-based email or low-PII alias registration, verification, password reset, Argon2id passwords, expiring/revocable sessions, CSRF, durable rate limits and staff TOTP.
+- Versioned information, consent and smoking baseline; goals; daily check-ins; honest missing-data progress; structured coaching; optional bounded AI fallback; surveys; follow-ups; support; account rights and withdrawal.
+- Separate MFA-gated staff workspace for participant flow, outcomes, surveys, safety/quality review, AI cost/reliability, data quality, evidence and release status, subject-rights requests, exports and gambling simulation.
+- PostgreSQL schema with forward migrations, deterministic synthetic seed, PGlite local/test runtime, Docker Compose PostgreSQL/Mailpit option, CSV/JSON exports, generated dictionary/report, backup/restore, retention jobs, tamper-evident audit and CycloneDX SBOM.
 
-## Run locally
+The tool is research support, not clinical care. It is not monitored, does not diagnose or prescribe, cannot alert a clinician, and is not emergency care.
 
-Requirements: Node.js 22.13 or later.
+## Requirements
+
+- Node.js 24.x and npm (the build deliberately declares Node 24; other versions are not the supported runtime).
+- Optional: Docker Desktop for PostgreSQL and Mailpit. PGlite requires neither Docker nor `psql`.
+- Optional: an OpenAI API key. All essential actions work without it and the seeded live-AI gate is closed.
+
+## Fast local start with PGlite
 
 ```powershell
-npm install
+npm ci
 Copy-Item .env.example .env.local
+$env:PGLITE_DATA_DIR='.data/mpft-local'
+npm run db:migrate
+npm run db:seed
+npm run db:verify
 npm run dev
 ```
 
-Open `http://localhost:3000`. An API key is optional. Without one, the coach uses an approved local template and the rest of the programme works normally.
+Open `http://localhost:3000`.
 
-Optional environment values:
+Fictional participant: alias `rowan-fictional-01`, password `Fictional-only-2026!`.
 
-```text
-OPENAI_API_KEY=
-OPENAI_COACH_MODEL=gpt-5.6-luna
-ENABLE_REMOTE_PARTICIPANT_STORAGE=false
-```
+Fictional administrator: email `fictional.admin@example.invalid`, the same password, and TOTP secret `JBSWY3DPEHPK3PXP` in a local authenticator. This development secret must never be configured in production.
 
-Never put `OPENAI_API_KEY` in a public browser variable or client component.
+Invitation codes are `SMOKE-FICTIONAL-2026` for the synthetic smoking participant route and `GAMBLE-STAFF-ONLY-2026` for staff simulation. Gambling has no participant route.
 
-## Quality checks
+## Docker PostgreSQL and Mailpit
 
 ```powershell
-npm run test:unit
+docker compose up -d
+npm ci
+Copy-Item .env.example .env.local
+```
+
+Set these values in `.env.local`:
+
+```text
+DATABASE_URL=postgres://mpft:mpft-local-only@127.0.0.1:5432/mpft_coach
+MAIL_TRANSPORT=smtp
+SMTP_HOST=127.0.0.1
+SMTP_PORT=1025
+```
+
+Then run:
+
+```powershell
+npm run db:migrate
+npm run db:seed
+npm run db:verify
+npm run dev
+```
+
+Mailpit is at `http://localhost:8025`. Docker and `psql` were unavailable in the final Windows verification environment, so the checked restore/fresh-store evidence uses PGlite; PostgreSQL remains the production data model and must be exercised in the selected pre-production host before release.
+
+## Quality and assurance commands
+
+```powershell
 npm run lint
+npm run test:unit
 npm run build
-npm test
+npm run e2e
 npm run evidence:freshness
+npm audit --omit=dev
+npm run sbom
 ```
 
-The tests cover pack-years, cost and progress arithmetic, evidence eligibility, unknown evidence IDs, safety routing, server-rendered product copy and the evidence dashboard. The safety corpus can be expanded without model calls.
+`npm run e2e` resets only `.data/mpft-e2e-test`, migrates and seeds it, starts the app on port 3100, then runs Chromium journeys and axe WCAG checks. It never uses real data.
 
-## Structure
+Generate research artefacts against a chosen synthetic store:
 
-```text
-app/                 routes and server API boundaries
-src/domain/          evidence, assessment, safety and progress types
-src/modules/         HealthModule contract and SmokingModule
-src/data/            patient-eligible evidence library
-src/ai/              structured OpenAI adapter and schema
-src/telemetry/       content-free development cost metrics
-src/infrastructure/  disabled future research persistence
-data/                discovery-stage evidence catalogue
-docs/                research, governance, demonstration and reviews
-scripts/             evidence freshness checks
-tests/               deterministic, safety and rendered-output tests
+```powershell
+$env:PGLITE_DATA_DIR='.data/mpft-local'
+$env:REPORT_AS_OF='2026-08-20T15:45:00Z'
+npm run report:synthetic
+npm run audit:verify
+npm run retention:dry-run
+npm run rights:dry-run
 ```
 
-The optional coach uses the OpenAI Responses API and Zod structured outputs. The server validates every returned evidence ID and rehydrates citation metadata from the application library. Current OpenAI documentation describes `responses.parse` with `zodTextFormat` for this pattern: [structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs).
+The report/export examples are under `artifacts/synthetic-pilot/`; the SBOM is `artifacts/security/sbom.cdx.json`; browser QA images and the Playwright report are under `artifacts/qa/` and `artifacts/playwright-report/`.
 
-## Evidence lifecycle
+## Backup and restore drill
 
-Discovery is separate from publication:
+Stop the app before copying a PGlite directory.
 
-```text
-discovery -> extraction -> independent critique -> citation check -> human review -> VERIFIED
+```powershell
+$env:PGLITE_DATA_DIR='.data/mpft-local'
+$env:PGLITE_BACKUP_OUTPUT='.data/backups/mpft-local-2026-08-20'
+npm run backup:pglite
+
+$env:PGLITE_RESTORE_SOURCE='.data/backups/mpft-local-2026-08-20'
+$env:PGLITE_RESTORE_TARGET='.data/mpft-restore-check'
+npm run restore:pglite
+$env:PGLITE_DATA_DIR='.data/mpft-restore-check'
+npm run db:verify
 ```
 
-`data/evidence.seed.json` is a discovery and extraction artefact. It is not patient-facing. `src/data/evidence.ts` is the runtime library. The evidence methodologist review records which runtime claims were directly checked. The freshness script can flag review dates, but cannot promote or publish a record.
+Both commands refuse overwrite. Production PostgreSQL uses encrypted `pg_dump`/`pg_restore` under the selected hosting backup policy; see the operations runbook.
 
-The admin page at `/admin/evidence` is read-only and intended for local development. It is not a complete evidence quality-management system and must not be exposed publicly without access control.
+## Live gates and data boundaries
 
-## Deployment and real research
+- `LIVE_PILOT_ENABLED`, `LIVE_AI_ENABLED` and `GAMBLING_PARTICIPANT_ENABLED` default to `false`.
+- An environment flag alone is never sufficient. The matching release must be authorised, named, dated, not revoked, and contain governance, clinical-safety and deployment approvals.
+- Production startup rejects PGlite, HTTP origins, the file mail sink, the development TOTP adapter, default session secrets, missing live-AI key/budget/pricing, and raw-text storage without an encryption key.
+- Default analysis exports exclude contact identity and raw text. Raw coaching text storage is off. `store: false` is used for OpenAI calls, but this is not described as zero retention.
+- Synthetic evidence may support synthetic journeys. Live claims additionally require named release approval, a verified claim decision, active non-expired sources, exact locators, hashed passages and citation linkage.
 
-Do not enable real participant use or remote health-data storage from this repository. A real pilot would need a named sponsor and controller, research or service-evaluation classification, clinical safety work, information governance, DPIA, security assurance, evidence ownership, incident management, accessibility research and a reviewed medical-device position. See [NHS governance roadmap](docs/nhs-governance-roadmap.md).
+## Documentation map
 
-## Main documents
+- [Architecture and data flow](docs/architecture-and-data-flow.md)
+- [Database and data dictionary](docs/data-dictionary.md)
+- [API and event contracts](docs/api-and-event-contracts.md)
+- [Surveys and measures](docs/surveys-and-measures.md)
+- [Release, evidence and AI governance](docs/release-evidence-ai-governance.md)
+- [Security, privacy and pre-live checklist](docs/security-privacy-and-pre-live.md)
+- [Safety and operating model](docs/safety-and-operating-model.md)
+- [Backup, restore, retention and incident runbook](docs/operations-runbook.md)
+- [Deployment guide](docs/deployment-guide.md)
+- [Pilot analysis plan](docs/pilot-analysis-plan.md)
+- [Synthetic QA record](docs/qa-record.md)
+- [External approvals and services](docs/external-dependencies.md)
+- [Implementation status](docs/implementation-status.md)
+- [Authoritative blueprint](docs/pilot-ready-product-blueprint.md), [minimum dataset](docs/pilot-minimum-dataset.md) and [evidence manifest](docs/evidence-source-manifest.md)
 
-- [Five-minute demonstration](docs/demo-script.md)
-- [Research concept](docs/research-concept.md)
-- [Project one-pager](docs/project-one-pager.md)
-- [Landscape review](docs/landscape-review.md)
-- [Governance roadmap](docs/nhs-governance-roadmap.md)
-- [Independent reviews](docs/reviews/)
+## Deployment boundary
 
-## Current limitations
-
-- No claim of clinical effectiveness, compliance, safety certification, novelty or MPFT endorsement is made.
-- Browser storage is unsuitable for clinical records and can be visible to other users of a shared browser profile.
-- Keyword safety routing is scope detection, not clinical triage.
-- The small evidence library is deliberately selective. Absence from it does not mean that evidence does not exist.
-- Model pricing metadata is effective-dated and must be checked before financial use.
-- Local in-memory telemetry resets with the server and contains no prompt or profile content.
+No deployment is performed by this repository handoff. A future deployment must use Node 24, PostgreSQL, TLS, an approved mail/MFA/provider configuration, secrets management, encrypted backups, monitoring that excludes health text, and the exact release manifest. “Technically pilot-ready” never means “authorised for live pilot.”

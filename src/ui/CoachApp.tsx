@@ -23,6 +23,7 @@ import {
   Target,
   Trash2,
 } from "lucide-react";
+import Image from "next/image";
 import type {
   Assessment,
   CheckIn,
@@ -728,9 +729,11 @@ function Landing({
       <section className="hero">
         <div className="hero-copy">
           <div className="brand">
-            <img
+            <Image
               src="/mpft-logo.png"
               alt="Midlands Partnership University NHS Foundation Trust"
+              width={461}
+              height={135}
             />
             <span className="prototype-name">
               Evidence Coach
@@ -950,7 +953,7 @@ function TopBar({
           aria-label="Go to home"
           onClick={() => setView("landing")}
         >
-          <img src="/mpft-logo.png" alt="" />
+          <Image src="/mpft-logo.png" alt="" width={461} height={135} />
           <span className="top-product">
             <strong>Evidence Coach</strong>
             <small>Research prototype</small>

@@ -1,0 +1,933 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:afa80aa3-153b-45a2-a329-6b8ec3c7689c",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-08-20T15:41:35.740Z",
+    "lifecycles": [
+      {
+        "phase": "pre-build"
+      }
+    ],
+    "tools": [
+      {
+        "vendor": "npm",
+        "name": "cli",
+        "version": "11.8.0"
+      }
+    ],
+    "component": {
+      "bom-ref": "mpft-evidence-coach-smoking-prototype@0.1.0",
+      "type": "application",
+      "name": "MPFT AI Health Coach",
+      "version": "0.1.0",
+      "scope": "required",
+      "purl": "pkg:npm/mpft-evidence-coach-smoking-prototype@0.1.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": []
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "@electric-sql/pglite@0.3.14",
+      "type": "library",
+      "name": "@electric-sql/pglite",
+      "version": "0.3.14",
+      "scope": "required",
+      "purl": "pkg:npm/%40electric-sql/pglite@0.3.14",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@electric-sql/pglite/-/pglite-0.3.14.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "dc3076e7c761a9db00ace2357c8b7b71bf51a543a07038398575958151c07aa550feac6d172eb4e502ace20c7a985ab78d6b123ea0cdf1381212ca82dce7d5f5"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@emnapi/core@1.10.0",
+      "type": "library",
+      "name": "@emnapi/core",
+      "version": "1.10.0",
+      "scope": "optional",
+      "purl": "pkg:npm/%40emnapi/core@1.10.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@emnapi/core/-/core-1.10.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "caae8e909e29f360807cf974bbd99079b40728f26463b5ab22e936d3971362761efa4d99f18061d7516b6d11bf1fa8a18aba9c69c3a09760483bca323102de5f"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@emnapi/wasi-threads@1.2.1",
+      "type": "library",
+      "name": "@emnapi/wasi-threads",
+      "version": "1.2.1",
+      "scope": "optional",
+      "purl": "pkg:npm/%40emnapi/wasi-threads@1.2.1",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.1.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "b93208ece605fbf31eb3f32b708398a79c8eb5230b056488a0b3e9720c22a6888a6e58ba937db6b5ca05b31a082313c3a96d35490180824a38133662d8136fdb"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@napi-rs/wasm-runtime@0.2.12",
+      "type": "library",
+      "name": "@napi-rs/wasm-runtime",
+      "version": "0.2.12",
+      "scope": "optional",
+      "purl": "pkg:npm/%40napi-rs/wasm-runtime@0.2.12",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-0.2.12.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "65559471fc18e04ff23e2b50265e3cd458c5a372b6d83eaa1740ee147e98fe76e7135d46639ba0b83c593065cf43c590d35dbc317403ed39df1f22b8a16a0825"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2",
+      "version": "2.0.2",
+      "scope": "required",
+      "purl": "pkg:npm/%40node-rs/argon2@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2/-/argon2-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "b7ae3022c3c4b4d7786943ee4c0c9e2f6b9bc404c204699e96e68a5c4300164ffcc3a00921556478b28c06980b5ba2d4dade5c4314fe7a7bff73a8f16ed4d006"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-android-arm-eabi@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-android-arm-eabi",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-android-arm-eabi@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-android-arm-eabi/-/argon2-android-arm-eabi-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "0d5fc7f29fe3b78d25adaa39cf983a9ccf5d3cd3c61072fe68ae88cbfa20f9d6cbe74dd48f40072ea8f51e4f5a554482367b0375410aa784d5322d186a40d82b"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-android-arm64@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-android-arm64",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-android-arm64@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-android-arm64/-/argon2-android-arm64-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d4b2b0b246aefbc3b592d2b1ed36caee3c75a0c38cb786045d939d48d21aaf54d02b19ba8ac6747115e01cb89b3c711c34781846c2560c4f73bc3181075ed00e"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-darwin-arm64@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-darwin-arm64",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-darwin-arm64@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-darwin-arm64/-/argon2-darwin-arm64-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "dd34cd2ffef06dca4d8eee5872a52b0a05e75d449b0fba2078029ab730551ec6e98d941b35bd4d0f10e3aaaad6a13b7a5cbdf3f66254306c1b024ef3425b47b4"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-darwin-x64@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-darwin-x64",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-darwin-x64@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-darwin-x64/-/argon2-darwin-x64-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "bcd3df90b8f9223e75d75513898bb083132a13b0d16ce4b6cb9f0ed832324b34876dc9eefa78a99912a0f8fd1da11aba78a2094adc812bc7508b921cf291720f"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-freebsd-x64@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-freebsd-x64",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-freebsd-x64@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-freebsd-x64/-/argon2-freebsd-x64-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "33cbd0664d35aa88d07c2a90534fced63d5ae333cfaf3f77cdcf5f488358ed0ffa4614110426300f0ee5b430995e0e4944695269e4bc7145d6ca13c66abddc1a"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-linux-arm-gnueabihf@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-linux-arm-gnueabihf",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-linux-arm-gnueabihf@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-linux-arm-gnueabihf/-/argon2-linux-arm-gnueabihf-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ec49a610f1cbcdcbb41b6183877d0be86e3c087dfcae8142d9daa54099ad442c6cea7a37b5313fa6f80119ab53a7fa369f6a3238971f9a09dd545714a70327c3"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-linux-arm64-gnu@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-linux-arm64-gnu",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-linux-arm64-gnu@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-linux-arm64-gnu/-/argon2-linux-arm64-gnu-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ea5b1887716d6e4f8700867bc0db911784990edc6d1537caf876050104325bb220dcb1ea6acab07d42915d5495e6d27ec539f18ea80acef652509080c887c77b"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-linux-arm64-musl@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-linux-arm64-musl",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-linux-arm64-musl@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-linux-arm64-musl/-/argon2-linux-arm64-musl-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a7762a54c353ff80cd47aeed2074d819b79d6265f15bd425166177f52917c846c6430a6049fea91f8e7bfdfc970486339d353fb269c6f441fe0b5bb34f98f884"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-linux-x64-gnu@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-linux-x64-gnu",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-linux-x64-gnu@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-linux-x64-gnu/-/argon2-linux-x64-gnu-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "64cde3ac7b89d1d28e86f03cd20289a81a414664c94c54a8dbec55651fa985071b00a4650cc4993050e229b4939dcb647f0345b63803761e60d6f684574e00bc"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-linux-x64-musl@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-linux-x64-musl",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-linux-x64-musl@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-linux-x64-musl/-/argon2-linux-x64-musl-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a1fe6e3ea93ba02445ff8e1af3d62559311f8ec7ed3f2c324d42f0b850cac83f10b55668a27ac947a656bdf144ffa8c14faf12d28900900cf33047415567715b"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-wasm32-wasi@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-wasm32-wasi",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-wasm32-wasi@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-wasm32-wasi/-/argon2-wasm32-wasi-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "5373f32d8292418cd3111b2d82d1cb77865390e17d728e7bcd35d3efbaf471552c95e1993ab77abadeeb1f3796c28252887395c716b43a11b525541e07b94ba1"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-win32-arm64-msvc@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-win32-arm64-msvc",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-win32-arm64-msvc@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-win32-arm64-msvc/-/argon2-win32-arm64-msvc-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "122b1deff34cd26db78a3ac6afac48da232871d3aeca5ea03b6ee07cc7f26b80b904e0db5123fb963289ecbac0d2d7aa64c7581deb110f3c77e89b3efbfbe189"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-win32-ia32-msvc@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-win32-ia32-msvc",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-win32-ia32-msvc@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-win32-ia32-msvc/-/argon2-win32-ia32-msvc-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "1ac1367b3c0063087bd9ff602236c64d939fe07c4492c6f93367826a3f98e6b19857001db7b0b5d90d9ef47e4b458c56705bcb1f89b88e2499a50438ba99cf01"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@node-rs/argon2-win32-x64-msvc@2.0.2",
+      "type": "library",
+      "name": "@node-rs/argon2-win32-x64-msvc",
+      "version": "2.0.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40node-rs/argon2-win32-x64-msvc@2.0.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@node-rs/argon2-win32-x64-msvc/-/argon2-win32-x64-msvc-2.0.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "709c565da9c7e04c3d09fb99e0800489a7e938109ef7b6f3a0aa301c21a4e651bfee4478585fde9279c19475bd9bcabbb75d262aaef992bb8f2ed6d20ea8114f"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@tybys/wasm-util@0.10.2",
+      "type": "library",
+      "name": "@tybys/wasm-util",
+      "version": "0.10.2",
+      "scope": "optional",
+      "purl": "pkg:npm/%40tybys/wasm-util@0.10.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@tybys/wasm-util/-/wasm-util-0.10.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "46806f2765f4c2e2a5585223af07df1b0d48a991ca42acc872129a69d6597e7369b00629da6334877e89b4f0a33430071a061ecffd79b8c0697c6c1c86188c82"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "drizzle-orm@0.45.2",
+      "type": "library",
+      "name": "drizzle-orm",
+      "version": "0.45.2",
+      "scope": "required",
+      "purl": "pkg:npm/drizzle-orm@0.45.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/drizzle-orm/-/drizzle-orm-0.45.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "918d0149a4cd6169e80cc568c98f2ec66c878e9256d6078e98131d49289c2a8f422085a44b13088f6ae4792479d5bf0a00f07b9beab2b23b8799ee6728ff84e5"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "lucide-react@1.31.0",
+      "type": "library",
+      "name": "lucide-react",
+      "version": "1.31.0",
+      "scope": "required",
+      "purl": "pkg:npm/lucide-react@1.31.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/lucide-react/-/lucide-react-1.31.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "1bcbb6784b681d49d46bd7fc95bbea0e10a239132760b754128d3a1041bd310bc742b22729c5f73dad931f7f4c339ab2cd1716113c41d3e68ec003c8d60d6412"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "nodemailer@9.0.5",
+      "type": "library",
+      "name": "nodemailer",
+      "version": "9.0.5",
+      "scope": "required",
+      "purl": "pkg:npm/nodemailer@9.0.5",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/nodemailer/-/nodemailer-9.0.5.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "c2f8e22af8dcce6b0ded4ffcd34e8939d5ee6e0064d971406e2a0331b4feb0cedc3ecd10ae12536ba281457ecfe511061a40dc2d4cff11aad689d6fc1bc0b58d"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT-0"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "openai@7.4.0",
+      "type": "library",
+      "name": "openai",
+      "version": "7.4.0",
+      "scope": "required",
+      "purl": "pkg:npm/openai@7.4.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/openai/-/openai-7.4.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "f82f4cba2b79c7c8fd47c7a3f19cd580a72b543b6a16a4f2f60c45768bf4108b4b814ebcceb26d17d65e4f4732a89416f52dcf08991d160003b511aab9106d7b"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "otpauth@9.4.1",
+      "type": "library",
+      "name": "otpauth",
+      "version": "9.4.1",
+      "scope": "required",
+      "purl": "pkg:npm/otpauth@9.4.1",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/otpauth/-/otpauth-9.4.1.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "fa256fcacdfa085b325c4a9f35fb509b5208ed25b6dd6d70c7d470364d0277dee56efa2ba808410e4b1bff46d8af2d3ced03318e2b814b4c2891da19d2251e03"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "postgres@3.4.7",
+      "type": "library",
+      "name": "postgres",
+      "version": "3.4.7",
+      "scope": "required",
+      "purl": "pkg:npm/postgres@3.4.7",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/postgres/-/postgres-3.4.7.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "26d736eb5d9720db818c897f4135ac57952f13c507b8d6e570edef5400d2acab2b73a46a197ea5396d5c128dc2336bf45c6e0d6adf2723e60ceff7f6e95c572f"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Unlicense"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@mpft/database-runtime@0.1.0",
+      "type": "library",
+      "name": "database-runtime",
+      "version": "0.1.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40mpft/database-runtime@0.1.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": []
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "mpft-evidence-coach-smoking-prototype@0.1.0",
+      "dependsOn": [
+        "@electric-sql/pglite@0.3.14",
+        "@mpft/database-runtime@0.1.0",
+        "@node-rs/argon2@2.0.2",
+        "drizzle-orm@0.45.2",
+        "lucide-react@1.31.0",
+        "nodemailer@9.0.5",
+        "openai@7.4.0",
+        "otpauth@9.4.1",
+        "postgres@3.4.7"
+      ]
+    },
+    {
+      "ref": "@electric-sql/pglite@0.3.14",
+      "dependsOn": []
+    },
+    {
+      "ref": "@emnapi/core@1.10.0",
+      "dependsOn": [
+        "@emnapi/wasi-threads@1.2.1"
+      ]
+    },
+    {
+      "ref": "@emnapi/wasi-threads@1.2.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "@napi-rs/wasm-runtime@0.2.12",
+      "dependsOn": [
+        "@emnapi/core@1.10.0",
+        "@tybys/wasm-util@0.10.2"
+      ]
+    },
+    {
+      "ref": "@node-rs/argon2@2.0.2",
+      "dependsOn": [
+        "@node-rs/argon2-android-arm-eabi@2.0.2",
+        "@node-rs/argon2-android-arm64@2.0.2",
+        "@node-rs/argon2-darwin-arm64@2.0.2",
+        "@node-rs/argon2-darwin-x64@2.0.2",
+        "@node-rs/argon2-freebsd-x64@2.0.2",
+        "@node-rs/argon2-linux-arm-gnueabihf@2.0.2",
+        "@node-rs/argon2-linux-arm64-gnu@2.0.2",
+        "@node-rs/argon2-linux-arm64-musl@2.0.2",
+        "@node-rs/argon2-linux-x64-gnu@2.0.2",
+        "@node-rs/argon2-linux-x64-musl@2.0.2",
+        "@node-rs/argon2-wasm32-wasi@2.0.2",
+        "@node-rs/argon2-win32-arm64-msvc@2.0.2",
+        "@node-rs/argon2-win32-ia32-msvc@2.0.2",
+        "@node-rs/argon2-win32-x64-msvc@2.0.2"
+      ]
+    },
+    {
+      "ref": "@node-rs/argon2-android-arm-eabi@2.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@node-rs/argon2-android-arm64@2.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@node-rs/argon2-darwin-arm64@2.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@node-rs/argon2-darwin-x64@2.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@node-rs/argon2-freebsd-x64@2.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@node-rs/argon2-linux-arm-gnueabihf@2.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@node-rs/argon2-linux-arm64-gnu@2.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@node-rs/argon2-linux-arm64-musl@2.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@node-rs/argon2-linux-x64-gnu@2.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@node-rs/argon2-linux-x64-musl@2.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@node-rs/argon2-wasm32-wasi@2.0.2",
+      "dependsOn": [
+        "@napi-rs/wasm-runtime@0.2.12"
+      ]
+    },
+    {
+      "ref": "@node-rs/argon2-win32-arm64-msvc@2.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@node-rs/argon2-win32-ia32-msvc@2.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@node-rs/argon2-win32-x64-msvc@2.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@tybys/wasm-util@0.10.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "drizzle-orm@0.45.2",
+      "dependsOn": [
+        "@electric-sql/pglite@0.3.14",
+        "postgres@3.4.7"
+      ]
+    },
+    {
+      "ref": "lucide-react@1.31.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "nodemailer@9.0.5",
+      "dependsOn": []
+    },
+    {
+      "ref": "openai@7.4.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "otpauth@9.4.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "postgres@3.4.7",
+      "dependsOn": []
+    },
+    {
+      "ref": "@mpft/database-runtime@0.1.0",
+      "dependsOn": [
+        "@electric-sql/pglite@0.3.14"
+      ]
+    }
+  ]
+}

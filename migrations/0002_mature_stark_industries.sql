@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "survey_instances_participant_schedule_unique" ON "research"."survey_instances" USING btree ("participant_id","survey_schedule_id");

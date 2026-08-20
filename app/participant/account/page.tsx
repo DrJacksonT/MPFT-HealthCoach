@@ -1,0 +1,10 @@
+import Link from "next/link";
+import { requireServerSession } from "@/src/auth/server";
+import { participantAccount } from "@/src/study/account";
+import { participantForUser } from "@/src/study/context";
+import { AccountActions } from "@/src/ui/study/AccountActions";
+
+export default async function AccountPage() {
+  const session = await requireServerSession(); const participant = await participantForUser(session.userId); const account = participant ? await participantAccount(participant.id) : { consent: null, requests: [] };
+  return <main id="main-content" className="app-content"><nav className="breadcrumbs"><Link href="/participant">Today</Link><span>/</span><span>Account and choices</span></nav><div className="app-title"><div><p className="eyebrow">Privacy and control</p><h1>Account and choices</h1><p>Manage optional consent, rights requests and study withdrawal.</p></div></div>{participant?.withdrawnAt && <div className="notice"><strong>Withdrawn on {participant.withdrawnAt.toLocaleDateString("en-GB")}.</strong> Coaching and new research entries are closed. Rights requests remain available.</div>}<div className="account-summary"><h2>Research identity</h2><dl><div><dt>Participant code</dt><dd>{participant?.participantCode ?? "Unavailable"}</dd></div><div><dt>Study status</dt><dd>{participant?.status ?? "Unavailable"}</dd></div><div><dt>Raw coach text storage</dt><dd>Disabled in this configuration</dd></div></dl></div><AccountActions optionalAiText={account.consent?.optionalAiText ?? false} optionalContact={account.consent?.optionalContact ?? false} withdrawn={Boolean(participant?.withdrawnAt)} /><section className="request-history"><h2>Request history</h2>{account.requests.length === 0 ? <p>No rights or withdrawal requests recorded.</p> : <div className="table-scroll"><table><thead><tr><th>Request</th><th>Status</th><th>Recorded</th></tr></thead><tbody>{account.requests.map((request) => <tr key={request.id}><td>{request.requestType.replaceAll("_", " ")}</td><td>{request.status}</td><td>{request.createdAt.toLocaleString("en-GB")}</td></tr>)}</tbody></table></div>}</section></main>;
+}

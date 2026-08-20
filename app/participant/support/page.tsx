@@ -1,0 +1,10 @@
+import Link from "next/link";
+import { requireServerSession } from "@/src/auth/server";
+import { participantForUser } from "@/src/study/context";
+import { participantSupport } from "@/src/study/referrals";
+import { ReferralActions } from "@/src/ui/study/ReferralActions";
+
+export default async function SupportPage() {
+  const session = await requireServerSession(); const participant = await participantForUser(session.userId); const data = participant ? await participantSupport(participant.id, participant.studyId) : { resources: [], records: [] }; const recordByResource = new Map(data.records.map((record) => [record.resourceId, record]));
+  return <main id="main-content" className="app-content"><nav className="breadcrumbs"><Link href="/participant">Today</Link><span>/</span><span>Support options</span></nav><div className="app-title"><div><p className="eyebrow">Human and practical support</p><h1>Support options</h1><p>Choose support without using AI. Recording use means only what you report here.</p></div><Link className="button button--danger" href="/help">Urgent help</Link></div><div className="notice"><strong>This research team is not a real-time support service.</strong> Opening a link does not notify anyone and is not recorded as treatment uptake.</div><div className="support-card-list">{data.resources.map((resource) => { const record = recordByResource.get(resource.id); return <article key={resource.id}><span className={`tag ${resource.urgent ? "tag--warning" : ""}`}>{resource.urgent ? "Urgent advice" : "Support option"}</span><h2>{resource.name}</h2><p>{resource.description}</p>{resource.availability && <p className="microcopy">Availability: {resource.availability}</p>}<div className="support-links">{resource.url && <a className="button" href={resource.url} target="_blank" rel="noreferrer">Open official website</a>}{resource.telephone && <a className="button button--outline" href={`tel:${resource.telephone.replaceAll(" ", "")}`}>Call {resource.telephone}</a>}</div>{!resource.urgent && <ReferralActions resourceId={resource.id} accepted={Boolean(record?.acceptedAt)} used={Boolean(record?.usedAt)} />}</article>; })}</div></main>;
+}

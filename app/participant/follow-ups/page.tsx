@@ -1,0 +1,9 @@
+import Link from "next/link";
+import { requireServerSession } from "@/src/auth/server";
+import { participantForUser } from "@/src/study/context";
+import { participantOutcomes } from "@/src/study/outcomes";
+
+export default async function FollowUpsPage() {
+  const session = await requireServerSession(); const participant = await participantForUser(session.userId); const outcomes = participant ? await participantOutcomes(participant.id) : []; const now = new Date();
+  return <main id="main-content" className="app-content"><nav className="breadcrumbs"><Link href="/participant">Today</Link><span>/</span><span>Smoking follow-ups</span></nav><div className="app-title"><div><p className="eyebrow">Scheduled outcomes</p><h1>Smoking follow-ups</h1><p>Self-report, missing data and biochemical verification stay distinct.</p></div></div><div className="notice"><strong>No answer is inferred from app activity.</strong> An incomplete or missed follow-up remains missing and unknown.</div><div className="survey-list">{outcomes.map((outcome) => { const future = now < outcome.windowOpensAt; const closed = now > outcome.windowClosesAt; return <article key={outcome.id}><div><span className={`tag ${outcome.completedAt ? "tag--open" : ""}`}>{outcome.completedAt ? "completed" : future ? "scheduled" : closed ? "missed — unknown" : "due"}</span><h2>{outcome.timepoint.replace("-", " ")} follow-up</h2><p>Due {outcome.dueAt.toLocaleDateString("en-GB")} · window {outcome.windowOpensAt.toLocaleDateString("en-GB")} to {outcome.windowClosesAt.toLocaleDateString("en-GB")}</p><p className="microcopy">Verification: {outcome.verificationStatus.replaceAll("_", " ")}</p></div>{outcome.completedAt ? <span>Complete</span> : future ? <span>Opens later</span> : closed ? <span>Window closed</span> : <Link className="button button--small" href={`/participant/follow-ups/${outcome.id}`}>Open follow-up</Link>}</article>; })}</div></main>;
+}
