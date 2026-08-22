@@ -18,6 +18,11 @@ const schema = z
       .default("local-development-session-key-change-before-production"),
     SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(12),
     FIELD_ENCRYPTION_KEY: z.string().optional().or(z.literal("")),
+    MFA_ENCRYPTION_KEY: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{43}$/, "MFA encryption key must be a 32-byte base64url value.")
+      .optional()
+      .or(z.literal("")),
     MAIL_TRANSPORT: z.enum(["disabled", "file", "smtp"]).default("file"),
     MAIL_FILE_DIR: z.string().default(".data/mail"),
     SMTP_HOST: z.string().default("127.0.0.1"),
@@ -51,6 +56,8 @@ const schema = z
       add("MAIL_TRANSPORT", "Production cannot use the local file mail sink.");
     if (env.STAFF_MFA_PROVIDER === "development_totp")
       add("STAFF_MFA_PROVIDER", "Production refuses the development MFA adapter.");
+    if (env.STAFF_MFA_PROVIDER === "totp" && !env.MFA_ENCRYPTION_KEY)
+      add("MFA_ENCRYPTION_KEY", "Production TOTP requires a dedicated encryption key.");
     if (env.LIVE_AI_ENABLED && !env.OPENAI_API_KEY)
       add("OPENAI_API_KEY", "A provider key is required when live AI is enabled.");
     if (env.LIVE_AI_ENABLED && env.OPENAI_STUDY_BUDGET_USD <= 0)

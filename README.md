@@ -130,6 +130,7 @@ Both commands refuse overwrite. Production PostgreSQL uses encrypted `pg_dump`/`
 - [Security, privacy and pre-live checklist](docs/security-privacy-and-pre-live.md)
 - [Safety and operating model](docs/safety-and-operating-model.md)
 - [Backup, restore, retention and incident runbook](docs/operations-runbook.md)
+- [Account and login setup](docs/account-setup.md)
 - [Deployment guide](docs/deployment-guide.md)
 - [Pilot analysis plan](docs/pilot-analysis-plan.md)
 - [Synthetic QA record](docs/qa-record.md)

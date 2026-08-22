@@ -76,7 +76,7 @@ export function RegisterForm({ emailEnabled = true }: { emailEnabled?: boolean }
     <form className="auth-form" onSubmit={submit} noValidate>
       {status.kind === "error" && <div className="error-summary" role="alert"><strong>There is a problem</strong><p>{status.message}</p></div>}
       {status.kind === "success" && <div className="success-summary" role="status"><strong>Account created</strong><p>{status.message}</p><Link href="/login">Go to sign in</Link></div>}
-      <label className="field"><span>Invitation code</span><span className="hint">For the fictional route, use the code supplied in the local test runbook.</span><input name="invitationCode" autoComplete="off" required /></label>
+      <label className="field"><span>Invitation code</span><span className="hint">Use the code supplied by the project owner. You will choose your own sign-in alias and password below.</span><input name="invitationCode" autoComplete="off" required /></label>
       <fieldset className="segmented-field"><legend>Account identity</legend><label><input type="radio" name="identityKind" checked={identityKind === "alias"} onChange={() => setIdentityKind("alias")} />Alias</label>{emailEnabled && <label><input type="radio" name="identityKind" checked={identityKind === "email"} onChange={() => setIdentityKind("email")} />Email</label>}</fieldset>
       {!emailEnabled && <p className="hint">Email registration is disabled until an approved delivery provider and domain are configured.</p>}
       <label className="field"><span>{identityKind === "alias" ? "Choose an alias" : "Email address"}</span><input name="identity" type={identityKind === "email" ? "email" : "text"} autoComplete="username" required /></label>
