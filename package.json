@@ -19,6 +19,7 @@
     "db:verify": "tsx scripts/db-verify.ts",
     "account:provision": "tsx scripts/provision-account.ts",
     "auth:smoke": "tsx scripts/auth-smoke.ts",
+    "auth:smoke:deployment": "tsx scripts/deployment-auth-smoke.ts",
     "surveys:schedule": "tsx scripts/schedule-surveys.ts",
     "report:synthetic": "tsx scripts/generate-pilot-report.ts",
     "backup:pglite": "tsx scripts/pglite-backup.ts",

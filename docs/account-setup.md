@@ -52,6 +52,8 @@ Clear account variables from the shell after provisioning:
 Remove-Item Env:MFA_ENCRYPTION_KEY, Env:ACCOUNT_IDENTITY_KIND, Env:ACCOUNT_IDENTITY, Env:ACCOUNT_DISPLAY_NAME, Env:ACCOUNT_ROLE, Env:ACCOUNT_PASSWORD, Env:ACCOUNT_UPDATE_EXISTING -ErrorAction SilentlyContinue
 ```
 
+The operator can verify both protected routes after deployment with `npm run auth:smoke:deployment`. Supply `DEPLOYMENT_ORIGIN`, `SMOKE_PARTICIPANT_IDENTITY`, `SMOKE_PARTICIPANT_PASSWORD`, `SMOKE_STAFF_IDENTITY`, `SMOKE_STAFF_PASSWORD`, and `SMOKE_STAFF_TOTP_SECRET` as temporary shell variables. The command does not print those values.
+
 ## Participant invitations
 
 The deterministic synthetic seed creates the `SMOKE-FICTIONAL-2026` invitation for technical testing. Do not publish invitation codes in the application or reuse this deterministic seed for a real pilot. A live invitation-management process requires named approval, expiry, role scope, revocation, secure delivery, and the recruitment release gate.
